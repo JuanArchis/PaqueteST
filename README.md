@@ -1,23 +1,5 @@
 <p align="center">
-<a name="top" href="#"> <img src="https://www.prestevez.com/post/r-package-tutorial/featured_hu65a70b43c8743462e59a2c4f0c658cf1_48992_720x0_resize_lanczos_2.png" alt="mf-dots" height="60%" width="100%"/> </a>
-
-</p>
-
-<p align="center">
-<a href="https://github.com/obliviousofcraps/mf-dots/stargazers"><img src="https://img.shields.io/github/stars/obliviousofcraps/mf-dots?color=89e19c&style=flat-square&logo=starship&labelColor=1d212a"></a>
-
-<p align="center">
-<a href="https://github.com/obliviousofcraps/mf-dots/network/members"><img src="https://img.shields.io/github/forks/obliviousofcraps/mf-dots?color=84afdb&style=flat-square&logo=jfrog-bintray&labelColor=1d212a"></a>
-
-<p align="center">
-<img alt="" src="https://img.shields.io/github/last-commit/obliviousofcraps/mf-dots?color=fbdf90&label=updated&style=flat-square&labelColor=1d212a"/>
-
-<p align="center">
-<img alt="" src="https://img.shields.io/github/repo-size/obliviousofcraps/mf-dots?style=flat-square&label=repo-size&color=fb9199&labelColor=1d212a"/>
-
-</p>
-
-<br/>  
+<a name="top" href="#"> <img src="https://media2.giphy.com/media/rGlAZysKBcjRCkAX7S/giphy.gif" alt="mf-dots" height="40%" width="60%"/> </a>
 
 # 
 
