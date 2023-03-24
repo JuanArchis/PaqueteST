@@ -1,5 +1,5 @@
 ---
-title: "**Análisis descriptivo de series temporales**"
+title: "**Series temporales**"
 author: Departamento de Ciencias Naturales y Matemáticas
 output: 
   learnr::tutorial:
