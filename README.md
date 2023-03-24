@@ -50,4 +50,4 @@ updateR()
 
 
 #
-En la versión 0.0.1 (actual) sólo se encuentra disponible el tutorial referente al anaĺisis descriptivo de series temporales.
+En la versión 0.0.1 (actual) sólo se encuentra disponible el tutorial referente al análisis descriptivo de series temporales.
