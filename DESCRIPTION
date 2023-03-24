@@ -15,7 +15,8 @@ Imports:
     ggplot2,
     gridExtra,
     learnr,
-    stargazer
+    stargazer,
+    gradethis
 Suggests: 
     learnr,
     testthat (>= 3.0.0)
