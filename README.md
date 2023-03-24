@@ -30,6 +30,15 @@ Al momento de instalar el paquete, R le pedirá indicar las versiones de los paq
 ```
 learnr::run_tutorial(name = "DescriptivaST", package = "PaqueteST")
 ```
+El paquete fue construido utilizando la versión 4.2.3 de R, si su versión es anterior a esta puede tener errores. Se recomienda actualizar a la versión más reciente de R. Puede hacer esto mediante código ejecutando:
+
+```
+install.packages("installr", dependencies = TRUE);library(installr)
+updateR()
+```
+
+
+
 #
 
 En la versión 0.0.1 (actual) sólo se encuentra disponible el tutorial referente al anaĺisis descriptivo de series temporales.
