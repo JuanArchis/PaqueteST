@@ -11,19 +11,27 @@ En el presente repositorio encontrará la versión 0.0.1 del paqueteST, el cual 
 
 #
 
+### :wrench: **Dependencias:**
+Antes de instalar y cargar es tutorial es menester que instale los siguientes paquetes: gradethis y devtools. Esto lo puede hacer ejecutando el código:
+
+```
+install.packages("devtools");library(devtools)
+devtools::install_github("rstudio/gradethis")
+```
+
+#
+
 ### :wrench: **Instrucciones de instalación:**
+
+
 
 **1.** Instale el paquete alojado en el presente repositorio ejecutando en R:
 
 ```
 devtools::install_github("JuanArchis/PaqueteST")
 ```
-Como dependencia debe tener instalado el paquete "devtools" en R:
-
-```
-install.packages("devtools")
-```
 Al momento de instalar el paquete, R le pedirá indicar las versiones de los paquetes a instalar, por favor digite "1" para actualizar e instalar todos las librerías necesarias en el tutorial.
+
 
 **2.** Finalmente ejecute el tutorial en R con el siguiente comando:
 
@@ -40,5 +48,4 @@ updateR()
 
 
 #
-
 En la versión 0.0.1 (actual) sólo se encuentra disponible el tutorial referente al anaĺisis descriptivo de series temporales.
