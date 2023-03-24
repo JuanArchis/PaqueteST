@@ -1,7 +1,8 @@
 Package: PaqueteST
 Title: Paquete curso Modelos Estadísticos para la toma de decisiones  
 Version: 0.0.0.1
-Authors@R: person("Juan Camilo Ordoñez Dueñas", 
+Authors@R: person("Juan Camilo",
+                  "Ordoñez Dueñas", 
                   "juan.ordonez.duenas@correounivalle.edu.co", 
                   role = c("aut", "cre"),
                   comment = c(ORCID = "YOUR-ORCID-ID"))
