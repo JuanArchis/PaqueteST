@@ -115,244 +115,319 @@ if (window.hljs) {
 <div id="section-presentación" class="section level2">
 <h2><strong>PRESENTACIÓN</strong></h2>
 <p><img src="images/banner_presentacion.png" width="100%" style="display: block; margin: auto;" /></p>
-<p>El presente tutorial contiene preguntas relacionadas con el análisis
-de series temporales con R; este está estructurado en tres etapas, a
-saber, Introducción o recordatorio teórico, cuestionario conceptual y
-ejercicios prácticos usando R.</p>
+<p>El presente tutorial abordará la parte de estimación y modelado de
+procesos estocásticos univariantes con R; este está estructurado en tres
+etapas: Introducción o recordatorio teórico, cuestionario conceptual y
+ejercicios prácticos usando R. <strong>Tenga presente que el presente
+tutorial da por sentado que el estudiante reconoce los conceptos clave
+de los procesos estocásticos, a saber, media, varianza, covarianza,
+función de autocorrelación (ACF) y función de autocorrelación parcial
+(PACF). También asume que conoce los modelos <span
+class="math inline">\(ARMA(p,q)\)</span> y su estructura</strong></p>
 <p></br></p>
 <div id="section-introducción" class="section level3">
 <h3><strong>Introducción</strong></h3>
-<p>Las series de tiempo son series de datos –variables– ordenadas por
-orden temporal y con algún tipo de índice que indica el tiempo al que
-corresponde esa observación. La secuencia comúnmente se organiza en
-puntos de tiempo con una separación igual, en ese caso son series de
-tiempo con intervalos iguales. Las series de tiempo también tienen puede
-tener intervalos desiguales, cuando el evento que se registra no ocurre
-con una periodicidad establecida; a saber, los registros de
-exportaciones trimestrales –con un dato por cada trimestre, así sea 0– y
-las exportaciones registradas en año, mes, día, hora, segundo.</p>
-<p>En general, el objetivo de dicho análisis es establecer tres
-criterios:</p>
+<p>Las etapas en la construcción de un modelo univariable en series
+temporales son:</p>
 <ul>
-<li>Tendencia y/o comportamiento estacional de la serie temporal.</li>
-<li>Varianza de la serie temporal.</li>
-<li>Modelizar la autocorrelación serial.</li>
+<li><p>Estacionariedad: Validar la estacionariedad de la serie, en caso
+de ser necesario, usar transformaciones.</p></li>
+<li><p>Identificación: Selección de un modelo cuyas propiedades teóricas
+sean compatibles con las propiedades muestrales observadas.</p></li>
+<li><p>Estimación: Estimar los parámetros del modelo ajustado</p></li>
 </ul>
-<p>Los tres objetivos son de interés para el presente tutorial.</p>
+<p>La siguiente figura simplifica las anteriores etapas:</p>
+<div class="figure" style="text-align: center">
+<img src="images/Imagen1.1.png" alt="Figura 1:  Mapa conceptual" width="100%" />
+<p class="caption">
+Figura 1: Mapa conceptual
+</p>
+</div>
 <p></br></p>
-<div id="section-tendencia-y-estacionariedad" class="section level4">
-<h4><strong>Tendencia y estacionariedad</strong></h4>
-<p>Antes de usar toda la potencia del modelado estadístico y pronóstico
-para con las series temporales, es menester establecer la
-estacionariedad o tendencia de esta. La razón fundamental es que los
-modelos tradicionales de pronósticos son utilizados con procesos
-estacionarios. Por ende, debe establecerse a partir de estadísticas
-descriptivas si la serie es o no estacionaria.</p>
-<p>Una serie es estacionaria (débilmente) si la media y la varianza no
-varía con el tiempo. Cuando se utiliza el término tendencia, en realidad
-se hace referencia al comportamiento de la media respecto al tiempo. El
-gráfico de una serie estacionaria vs NO estacionaria sólo en media
-es:</p>
-<p><img src="images/Imagen1.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>Como se evidencia en el gráfico de la derecha, la media aumenta
-positivamente respecto al tiempo. Si la serie temporal tiene algún tipo
-de tendencia respecto al tiempo, se sabe por lo menos que la serie no es
-estacionaria en media. <strong>Puede suceder que la tendencia de una
-serie no parezca seguir un patrón correcto, en ese caso de habla de una
-tendencia estocástica</strong></p>
+<div id="section-estacionariedad" class="section level4">
+<h4><strong>Estacionariedad</strong></h4>
+<p>Se dice que un proceso estocástico <span
+class="math inline">\((Y_t)\)</span> es estacionario (o débilmente
+estacionario de segundo orden) si y sólo si:</p>
+<ul>
+<li><span class="math inline">\(E[Y_t]\)</span> y <span
+class="math inline">\(Var[Y_t]\)</span> no dependen de t, es decir, son
+constantes en el tiempo.</li>
+<li><span class="math inline">\(Cov[Y_t,Y_{t+k}]\)</span> depende a lo
+sumo de k (rezago) pero no de t.</li>
+</ul>
+<p>En el tutorial descriptivo se validó la estacionariedad en función de
+las gráficas, más sin embargo, es posible validar la estacionariedad de
+una serie con pruebas formales. Este es el caso de la prueba de Dickey y
+Fuller, que busca determinar si una serie temporal tiene raíces
+unitarias; es decir, si la serie temporal es estacionaria o no
+estacionaria. La hispótesis estadísticas de la prueba son:</p>
+<p><span class="math display">\[H_0:\text{La series es no estacionaria
+(Tiene raíz unitaria)} \]</span> <span
+class="math display">\[H_1:\text{La series es estacionaria (No tiene
+raíz unitaria)} \]</span> Para realizar la prueba en R se debe instalar
+y cargar la librería “tseries”. La función para aplicar esta es:</p>
+<pre class="r"><code>install.packages(&quot;tseries&quot;);library(&quot;tseries&quot;) # Instalar y cargar las librerias
+tseries::adf.test(Serie) # Aplicar la prueba a un vector tipo ts en R</code></pre>
 </div>
-<div id="section-varianza" class="section level4">
-<h4><strong>Varianza</strong></h4>
-<p>En el gráfico derecho anterior era fácil evidenciar la existencia de
-una tendencia; de ese mismo gráfico es posible deducir que la varianza
-de la serie sí es constante (<strong>Homocedasticidad</strong>) respecto
-al tiempo, pues la ondulación se mantiene constante a un intervalo de la
-variable <span class="math inline">\(X\)</span>. Si por ejemplo, la
-serie temporal fuese NO estacionaria en varianza tendría el siguietne
-gráfico:</p>
-<p><img src="images/Imagen2.png" width="70%" style="display: block; margin: auto;" /></p>
-<p>El gráfico de la derecha presenta una serie que es estacionaria en
-media, pues la tendencia es constante a un valor, pero la varianza no es
-constante, dado que la longitud de las ondulaciones es distinta en cada
-instante t. En general, los cuatro tipos de gráficos y tendencias más
-comunes se resumen en el siguiente gráfico:</p>
-<p><img src="images/Imagen3.png" width="70%" style="display: block; margin: auto;" /></p>
+<div id="section-identificación" class="section level4">
+<h4><strong>Identificación</strong></h4>
+<p>Los modelos base para procesos estocásticos son:</p>
+<ul>
+<li>Autorregresivo de orden <span class="math inline">\(p\)</span>,
+<span class="math inline">\(AR(p)\)</span></li>
+<li>Media movil de orden <span class="math inline">\(q\)</span>, <span
+class="math inline">\(MA(q)\)</span></li>
+</ul>
+<p>En general, ambos modelos nacen de la simplificación de uno solo:
+modelo autorregresivo-media móvil de orden <span
+class="math inline">\((p,q)\)</span>, o <span
+class="math inline">\(ARMA(p,q)\)</span>.</p>
+<p>Ahora bien, una vez que se ha validado la estacionariedad de un
+vector, la pauta clave para la identificación del modelo a ajustar son
+las AFC y PACF. Las funciones de autocorerlaciones pueden variar en
+función de los parámetros del modelo, por lo tanto a constinuación se
+presentan las carácterísticas principales para cada modelo:</p>
+<div id="section-arp" class="section level5">
+<h5>AR(p)</h5>
+<p>Un proceso es autoregresivo de orden P si se define por la siguiente
+ecuación:</p>
+<p><span class="math display">\[X_t = c + \phi_1 X_{t-1} + \phi_2
+X_{t-2} + \cdots + \phi_p X_{t-p} + a_t\]</span> La condición más
+importante en este es la estacionariedad, es decir, Las raíces del
+polinomio característico del proceso AR(p) deben estar fuera del círculo
+unitario. Esto garantiza que el proceso AR(p) sea estacionario y que las
+soluciones sean finitas. Si por ejemplo, el proceso es AR(1), el valor
+absoluto del parámetro de autoregresión, <span
+class="math inline">\(|\phi|\)</span>, debe ser menor que 1. Esto
+garantiza que la serie temporal sea estacionaria.Las características
+claves para los modelos AR(p) son</p>
+<ul>
+<li><p>Función de autocorrelación (ACF): la ACF de un proceso AR(p)
+decae exponencialmente hacia cero a medida que aumenta el retraso, y se
+anula para todos los rezagos mayores que <span
+class="math inline">\(p\)</span>.</p></li>
+<li><p>Función de autocorrelación parcial (PACF): la PACF de un proceso
+AR(p) tiene un corte abrupto después del rezago <span
+class="math inline">\(p\)</span>, lo que indica que para rezagos mayores
+a <span class="math inline">\(p\)</span>, la correlación es
+estadísticamente cero.</p></li>
+</ul>
+<p>Tome la siguientes figuras como referencia:</p>
+<div class="figure" style="text-align: center">
+<img src="images/Figura1.png" alt="Figura 2:  Ejemplos de funciones de autocorrelación de un proceso AR(p)" width="100%" />
+<p class="caption">
+Figura 2: Ejemplos de funciones de autocorrelación de un proceso AR(p)
+</p>
 </div>
-<div id="section-acf-y-pacf" class="section level4">
-<h4><strong>ACF Y PACF</strong></h4>
-<p>Las funciones de autocorrelación (simples y parciales) toman
-importancia en la etapa de modelado, pues conociendo los gráficos de
-autocorrelaciones de una serie estacionaria es posible modelar esta con
-procesos conocidos. A continuación se muestra una tabla resumen de las
-gŕaficas de los cuatro procesos más comunes de órden unitario: AR(1),
-MA(1) …</p>
-<p><img src="images/Procesos.png" width="60%" style="display: block; margin: auto;" />
-En caso de contar con procesos de segundo órden, la PACF y ACF de los
-procesos AR y MA respectivamente, se anularán para resagos mayores a
-2.</p>
+<p>De ellas puede extraer que:</p>
+<ul>
+<li><p>De los procesos AR(1), la ACF decrece rápidamente despues del
+primer rezago. Por otro lado, la PACF es nula para rezagos mayores a 1.
+La misma lógica aplica para los modelos AR(2)</p></li>
+<li><p>Note que si el parámetro es negativo en un modelo AR(1), la AFC
+sigue una estructura intercalada y la PACF es negativa. En caso de ser
+un proceso AR(2) un parámetro negativo, la AFC también es
+intercalado.</p></li>
+</ul>
 </div>
-<div id="section-funciones-comunes-en-r" class="section level4">
-<h4><strong>Funciones comunes en R</strong></h4>
+<div id="section-maq" class="section level5">
+<h5>MA(q)</h5>
+<p>Un proceso es medias móviles (MA) de orden <span
+class="math inline">\(q\)</span> si se define por la siguiente
+ecuación:</p>
+<p><span class="math display">\[X_t = \mu + a_t + \theta_1 a_{t-1} +
+\theta_2 a_{t-2} + \cdots + \theta_q a_{t-q}\]</span></p>
+<p>Las características claves para los modelos MA(q) son</p>
 <ul>
-<li><strong>Clase <span class="math inline">\(ts\)</span></strong></li>
+<li><p>Función de autocorrelación (ACF): la ACF de un proceso MA(Q)
+tiene un corte abrupto después del rezago <span
+class="math inline">\(q\)</span>, lo que indica que para rezagos mayores
+a <span class="math inline">\(q\)</span>, la correlación es
+estadísticamente cero. <span class="math inline">\(p\)</span>.</p></li>
+<li><p>Función de autocorrelación parcial (PACF): la PACF de un proceso
+MA(Q)tiene picos significativos en los primeros <span
+class="math inline">\(q\)</span> rezagos y luego decae a cero.</p></li>
 </ul>
-<p>R cuenta con numerosas funciones para el análisis de series
-temporales. El uso de tales funciones requiere que los objetos a los que
-se aplican sean de la clase ts (time series). La función ts() convierte
-un objeto a serie temporal. Por ejemplo:</p>
-<p>Suponga se cuenta con el siguiente vector de observaciones que hace
-referencia al total de goles marcados por algún equipo en la primer
-jornada:</p>
-<pre class="r"><code>Serie=c(35,25,29,33,27,29,17,30,19,32,33,23,33,42,27,27,37,26,28,24,38,26,30,20,23,26,27,28,29,30,31,32,33,34,35,36,37,38,22,27,28,28,21,24,29,24,28,29,24,24,24)</code></pre>
-<p>Podemos convertir la sucesión de goles marcados por jornada en una
-serie temporal simplemente mediante:</p>
-<pre class="r"><code>Goles=ts(Serie)
-Goles</code></pre>
-<pre><code>Time Series:
-Start = 1 
-End = 51 
-Frequency = 1 
- [1] 35 25 29 33 27 29 17 30 19 32 33 23 33 42 27 27 37 26 28 24 38 26 30 20 23
-[26] 26 27 28 29 30 31 32 33 34 35 36 37 38 22 27 28 28 21 24 29 24 28 29 24 24
-[51] 24</code></pre>
-<p>El objeto que hemos creado, goles, es un objeto de clase Time Series
-con inicio en 1, final en 51 y frecuencia 1; en resumen, es una simple
-sucesión ordenada de valores.</p>
-<p>Ahora bien, suponga que el vector de goles anterior cuenta la
-cantidad de goles de un equipo en siete años; si cuenta con la fecha de
-inicio y su secuencia, es posble establecerlos mediante dos argumentos
-de la función <span class="math inline">\(ts\)</span>:</p>
+<p>Tome la siguientes figuras como referencia:</p>
+<div class="figure" style="text-align: center">
+<img src="images/Figura2.png" alt="Figura 3:  Ejemplos de funciones de autocorrelación de un proceso MA(q)" width="100%" />
+<p class="caption">
+Figura 3: Ejemplos de funciones de autocorrelación de un proceso MA(q)
+</p>
+</div>
+</div>
+<div id="section-armapq" class="section level5">
+<h5>ARMA(p,q)</h5>
+<p>La caracterizacioń gráfica de las funciones de autocorrelación de los
+modelos <span class="math inline">\(ARMA(p,q)\)</span> es un poco más
+compleja, a continuación se muestran diferentes gráficas de este:</p>
+<div class="figure" style="text-align: center">
+<img src="images/Figura3.png" alt="Figura 4:  Ejemplos de funciones de autocorrelación de un proceso ARMA(1,1)" width="100%" />
+<p class="caption">
+Figura 4: Ejemplos de funciones de autocorrelación de un proceso
+ARMA(1,1)
+</p>
+</div>
+<p>La siguiente tabla simplifica la información más relevante para los
+modelos <span class="math inline">\(ARMA(p,q)\)</span></p>
+<div class="figure" style="text-align: center">
+<img src="images/Imagen2.2.png" alt="Figura 5:  Características de los modelos ARMA(p,q)" width="100%" />
+<p class="caption">
+Figura 5: Características de los modelos ARMA(p,q)
+</p>
+</div>
+<p><strong>Tenga en cuenta que en los gráficos ACF y PACF de un
+ARMA(P,A), puede no ser claro si se están reduciendo o cortando. Con
+ARMA, los órdenes de p y q para AR y MA pueden ser más de uno. Por lo
+tanto, se recomienda probar algunas combinaciones p y q para obtener la
+mejor puntuación de AIC y BIC.</strong></p>
+</div>
+</div>
+<div id="section-arima-pdq" class="section level4">
+<h4>ARIMA (p,d,q)</h4>
+<p>Un modelo ARIMA (p, d, q) se usa especialmente cuando la serie no es
+estacionaria y se necesita diferenciación para convertirla en una serie
+estacionaria. Esta se compone de:</p>
 <ul>
-<li><p><span class="math inline">\(freq:\)</span> Indica la unidad
-temporal de las observaciones, a saber: Anual (1), Trimestral (4),
-Mensual (12) y Semanal (52)</p></li>
-<li><p><span class="math inline">\(start:\)</span> Indica la fecha de la
-primera observación</p></li>
+<li><p>El modelo autoregresivo (AR) de orden p.</p></li>
+<li><p>El modelo integrado (I) de orden d, que se utiliza para
+transformar una serie no estacionaria en una serie estacionaria mediante
+la diferenciación. El parámetro d indica la cantidad de veces que se
+diferencia la serie de tiempo para obtener una serie
+estacionaria.</p></li>
+<li><p>El modelo de media móvil (MA) de orden q.</p></li>
 </ul>
-<p>Así por ejemplo, crear una serie temporal de los goles desde 1985
-hasta 1991 donde cada observación corresponde al mes del año en
-cuestión, es:</p>
-<pre class="r"><code>Goles_Mensual=ts(Serie,freq=12,start = 1985)
-Goles_Mensual</code></pre>
-<pre><code>     Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
-1985  35  25  29  33  27  29  17  30  19  32  33  23
-1986  33  42  27  27  37  26  28  24  38  26  30  20
-1987  23  26  27  28  29  30  31  32  33  34  35  36
-1988  37  38  22  27  28  28  21  24  29  24  28  29
-1989  24  24  24                                    </code></pre>
-<p>Aquí se establece cada observación a su año respectivo, con inicio
-desde <span class="math inline">\(1940\)</span>.</p>
-<pre class="r"><code>Goles_Anual=ts(Serie,freq=1,start = 1940)
-Goles_Anual</code></pre>
-<pre><code>Time Series:
-Start = 1940 
-End = 1990 
-Frequency = 1 
- [1] 35 25 29 33 27 29 17 30 19 32 33 23 33 42 27 27 37 26 28 24 38 26 30 20 23
-[26] 26 27 28 29 30 31 32 33 34 35 36 37 38 22 27 28 28 21 24 29 24 28 29 24 24
-[51] 24</code></pre>
+</div>
+<div id="section-ejemplo-de-aplicación-y-códigos-en-r"
+class="section level4">
+<h4>Ejemplo de aplicación y códigos en R</h4>
+<p>Suponga que se tiene la siguiente serie:</p>
+<pre class="r"><code>RawData=scan(&#39;https://www.diegocalvo.es/wp-content/uploads/2016/09/datos-serie-temporal.txt&#39;)
+serie = ts(RawData, start = c(1966,1), frequency = 12)
+plot(serie,xlab=&quot;Años&quot;,ylab=&quot;Datos&quot;)</code></pre>
+<p><img src="InferenciaST_files/figure-html/unnamed-chunk-8-1.png" width="624" /></p>
+<p>Como se podrá suponer, la serie muestra una clara no estacionariedad.
+Además, graficando la ACF parciales de la serie se tiene:</p>
+<pre class="r"><code>acf(serie)</code></pre>
+<p><img src="InferenciaST_files/figure-html/unnamed-chunk-9-1.png" width="624" /></p>
+<p>La cual muestra no estacionariedad en la serie dado que el valor de
+la función de autocorrelación no decae de manera exponencial a medida
+que aumentan los rezagos en el tiempo. Para estos casos es menester
+descomponer la serie en tres componentes:</p>
 <ul>
-<li><strong>Gŕaficos</strong></li>
+<li><p>Tendencia: cómo están cambiando las cosas en general. Un sitio
+web cada vez más popular debe mostrar una tendencia general que
+sube.</p></li>
+<li><p>Estacional o Periódico: Patrones que se repiten con un período
+fijo de tiempo. Por ejemplo, un sitio web puede recibir más visitas
+durante los fines de semana; esto produciría datos con una
+estacionalidad de 7 días.</p></li>
+<li><p>Aleatorio/error/residuo: también llamado “ruido”, estos son los
+residuos de la serie de tiempo original después de que se eliminan las
+series estacionales y de tendencia.</p></li>
 </ul>
-<p>Para graficar cualquier objeto tipo <span
-class="math inline">\(ts\)</span> en R se puede utilizar la función
-<span class="math inline">\(plot()\)</span></p>
-<pre class="r"><code>plot(Goles_Anual,xlab=&quot;Año&quot;,ylab=&quot;Goles&quot;)</code></pre>
-<p><img src="DescriptivaST_files/figure-html/unnamed-chunk-10-1.png" width="624" /></p>
+<p><strong>Con la anterior descomposición se busca identificar el factor
+responsable de la no estacionariedad y corregirlo</strong></p>
+<p>En R esto sería:</p>
+<pre class="r"><code>Descomposición=decompose(serie)
+plot(Descomposición)</code></pre>
+<p><img src="InferenciaST_files/figure-html/unnamed-chunk-10-1.png" width="624" /></p>
+<p>Cuya descomposición muestra que tiene dos responsables de la no
+estacionariedad: La tendencia y la estacionalidad. El modelo que vamos a
+utilizar es un modelo ARIMA, diferenciando la serie se logrará que sea
+convertida a estacionaria. Para conocer el número de diferenciaciones
+regulares que requiere una serie para aliminar la tendencia se usa la
+función <span class="math inline">\(ndiffs()\)</span> del paquete
+“forecast”. Para conocer el número de periodos estacionales de una serie
+se usa la función <span class="math inline">\(nsdiffs()\)</span>.</p>
+<pre class="r"><code>library(&quot;forecast&quot;)
+ndiffs(serie) # Diferenciaciones necesarias para eliminar la tendencia</code></pre>
+<pre><code>[1] 1</code></pre>
+<pre class="r"><code>nsdiffs(serie) # Indica la priodicidad estacional</code></pre>
+<pre><code>[1] 1</code></pre>
+<p>Lo anterior nos indica que:</p>
 <ul>
-<li><strong>Gŕaficos y funciones en data frames con múltiples series
-temporales</strong></li>
+<li>Se requiere una diferenciación para eliminar la tendencia.</li>
+<li>El componente estacional de la serie es unitario, es decir, el
+patrón se repite por unidad de tiempo (en este caso años).</li>
 </ul>
-<p>La función ts() puede aplicarse también a un dataframe que contenga
-varias variables; en tal caso, cada variable se convierte a serie
-temporal, y el dataframe adquiere la clase mts (multivariate time
-series). Por ejemplo:</p>
-<pre class="r"><code>Serie2=data.frame(c(13,10,13,13,15,17,15,18,19,17,18,20,23,25,26,14,10,9,8,4),c(24,23,30,23,24,26,30,35,36,31,20,19,18,17,19,19,20,26,25,35),c(16.8,14.5,12.5,16.8,18.7,19.7,20.3,20.1,25.1,17.6,19.9,25.5,23.3,25.6,21.0,18.8,15.5,14.1,12.3,20))
-colnames(Serie2)=c(&quot;Min&quot;,&quot;Max&quot;,&quot;Vel&quot;)
-kable(head(Serie2))</code></pre>
-<table>
-<thead>
-<tr class="header">
-<th align="right">Min</th>
-<th align="right">Max</th>
-<th align="right">Vel</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="right">13</td>
-<td align="right">24</td>
-<td align="right">16.8</td>
-</tr>
-<tr class="even">
-<td align="right">10</td>
-<td align="right">23</td>
-<td align="right">14.5</td>
-</tr>
-<tr class="odd">
-<td align="right">13</td>
-<td align="right">30</td>
-<td align="right">12.5</td>
-</tr>
-<tr class="even">
-<td align="right">13</td>
-<td align="right">23</td>
-<td align="right">16.8</td>
-</tr>
-<tr class="odd">
-<td align="right">15</td>
-<td align="right">24</td>
-<td align="right">18.7</td>
-</tr>
-<tr class="even">
-<td align="right">17</td>
-<td align="right">26</td>
-<td align="right">19.7</td>
-</tr>
-</tbody>
-</table>
-<p>Los datos anteriores contienen los valores mínimo, máximo y medio
-mensuales de temperaturas y velocidad de viento registrados. Para
-convertirlo en una serie temporal multivariable use:</p>
-<pre class="r"><code>Serie_Multi=ts(Serie2,freq=12,start=c(1981,1))
-Serie_Multi</code></pre>
-<pre><code>         Min Max  Vel
-Jan 1981  13  24 16.8
-Feb 1981  10  23 14.5
-Mar 1981  13  30 12.5
-Apr 1981  13  23 16.8
-May 1981  15  24 18.7
-Jun 1981  17  26 19.7
-Jul 1981  15  30 20.3
-Aug 1981  18  35 20.1
-Sep 1981  19  36 25.1
-Oct 1981  17  31 17.6
-Nov 1981  18  20 19.9
-Dec 1981  20  19 25.5
-Jan 1982  23  18 23.3
-Feb 1982  25  17 25.6
-Mar 1982  26  19 21.0
-Apr 1982  14  19 18.8
-May 1982  10  20 15.5
-Jun 1982   9  26 14.1
-Jul 1982   8  25 12.3
-Aug 1982   4  35 20.0</code></pre>
-<p>La gŕafica es análoga al caso univariable:</p>
-<pre class="r"><code>plot(Serie_Multi)</code></pre>
-<p><img src="DescriptivaST_files/figure-html/unnamed-chunk-13-1.png" width="624" /></p>
+<p>Para defereciar la serie, se usa la función <span
+class="math inline">\(diff()\)</span> en R.</p>
+<pre class="r"><code>serie_dif=diff(serie)
+plot(serie_dif)</code></pre>
+<p><img src="InferenciaST_files/figure-html/unnamed-chunk-12-1.png" width="624" /></p>
+<p>Una vez nuestra se soluciona la tendencia de la serie, debemos
+eliminar la estacionalidad de los datos, es decir, restar el componente
+estacional de la serie original(media cero) y luego lo diferenciamos
+para que sea estacionario (varianza constante e independiente).</p>
+<pre class="r"><code>serie_ajust=serie-Descomposición$seasonal # Se elimina la componente de estacionalidad del modelo
+serie_estacionaria=diff(serie_ajust,differences=1) # Se elimna la componente de tendencia en la serie</code></pre>
+<p>El orden a seguir para convertir una serie en estacionaria es: 1)
+Eliminar la componente de estacionalidad y 2) eliminar la componente de
+tendencia. Así, ya contamos con la serie finalmente trasnformada y
+estacionaria. Finalmente aplicamos la prueba de Dickey y Fuller para
+validad la estacionariedad.</p>
+<pre class="r"><code>tseries::adf.test(serie_estacionaria) </code></pre>
+<pre><code>
+    Augmented Dickey-Fuller Test
+
+data:  serie_estacionaria
+Dickey-Fuller = -6.4931, Lag order = 5, p-value = 0.01
+alternative hypothesis: stationary</code></pre>
+<p>Y con una significancia del 5%, existe suficiente evidencia
+estadística para concluir que la serie diferenciada es estacionaria.
+Ahora bien, lo que resta es identificar el las componentes AR(p) y MA(q)
+del modelo ARIMA(p,1,q); para realizar esto se grafican las funciones de
+autocorrelación de la serie estacionaria.</p>
+<pre class="r"><code>par(mfrow=c(1,2))
+acf(serie_estacionaria, lag.max=140)
+pacf(serie_estacionaria, lag.max=140)</code></pre>
+<p><img src="InferenciaST_files/figure-html/unnamed-chunk-15-1.png" width="624" /></p>
+<p>Como se evidencia, a partir del primer rezago (la primera línea hace
+referencia al rezago 0, esta siempre es 1) las funciones se anulan. La
+ACF es nula a partir de <span class="math inline">\(k=1\)</span> y la
+PACF decrece a partir de <span class="math inline">\(k=1\)</span>. Dado
+lo anterior, se podría pensar en un modelo ARMA(1,1). Así que finalmente
+se ajustará un modelo ARIMA(1,1,1) a la serie original:</p>
+<pre class="r"><code>Modelo=arima(serie, order=c(1,1,1),seasonal = list(order = c(1,0,0), period = 12),method=&quot;ML&quot;)</code></pre>
+<p>La función en general para aplicar los modelos vistos es <span
+class="math inline">\(arima\)</span>. Así, si se quiere ajustar un
+modelo AR(1) se ajustaria un <span
+class="math inline">\(arima(1,0,0)\)</span> y así para los modelos MA(q)
+y ARMA(p,q). Los argumentos de esta son:</p>
 <ul>
-<li><strong>ACF y PACF</strong></li>
+<li><p><strong>order:</strong> Especifica la parte no estacional del
+modelo ARIMA: (p, d, q) se refiere al orden AR, el grado de diferencia y
+la orden MA.</p></li>
+<li><p><strong>seasonal:</strong> Especifica la parte estacional del
+modelo ARIMA, más el período (que por defecto es la frecuencia (x), es
+decir, 12 en este caso). Esta función requiere una lista con el orden de
+los componentes pero dado en un vector numérico de longitud 3, y el
+período.</p></li>
+<li><p><strong>method:</strong> Se refiere al método de estimación, que
+puede ser «Máxima verosimilitud (ML)» o «minimizaciónde la suma de
+cuadrados condicional (CSS)». El valor predeterminado es el segundo
+método.</p></li>
 </ul>
-<p>Las funciones de autocorrelación simple y parcial son fundamentales
-para encontrar el modelo pertinente asociado a determinada serie. Las
-funciones son:</p>
-<ul>
-<li><span class="math inline">\(acf():\)</span> Función para extraer el
-gráfico de las autocorrelaciones</li>
-<li><span class="math inline">\(pacf():\)</span> Función para extraer el
-gráfico de las autocorrelaciones parciales</li>
-</ul>
-<p>Ahora, es momento de pasar al cuestionario.</p>
+<p>Finalmente, las estimaciones del modelo son:</p>
+<pre class="r"><code>Modelo</code></pre>
+<pre><code>
+Call:
+arima(x = serie, order = c(1, 1, 1), seasonal = list(order = c(1, 0, 0), period = 12), 
+    method = &quot;ML&quot;)
+
+Coefficients:
+          ar1      ma1    sar1
+      -0.5099  -0.2613  0.9353
+s.e.   0.1276   0.1603  0.0221
+
+sigma^2 estimated as 2.726e+16:  log likelihood = -2840.17,  aic = 5688.34</code></pre>
+<p><strong>Recuerde que puede comparar varios modelos con distintos
+criterios. El criterio de informacion de Akaike (AIC) es uno de
+ellos.</strong></p>
+<p>Ahora bien, finalizado la presentación del documento, es momento de
+pasar al cuestionario.</p>
 </div>
 </div>
 </div>
@@ -360,11 +435,14 @@ gráfico de las autocorrelaciones parciales</li>
 <h2><strong>CUESTIONARIO</strong></h2>
 <div id="section-pregunta-1" class="section level3">
 <h3><strong>Pregunta 1</strong></h3>
-<p>Sea la siguiente gráfica:</p>
+<p>Sea la siguiente figura con gráfico de tiempo y gráficos ACF y PACF
+para los datos ajustados estacionalmente diferenciados en primer
+orden:</p>
 <div class="figure" style="text-align: center">
-<img src="images/Imagen4.png" alt="Figura 1: Inflación interanual en España Enero 1982 – Diciembre 2002" width="70%" />
+<img src="images/Imagen4.png" alt="Figura 1: ráfico de tiempo y gráficos ACF y PACF para los datos de equipos eléctricos ajustados estacionalmente diferenciados. " width="100%" />
 <p class="caption">
-Figura 1: Inflación interanual en España Enero 1982 – Diciembre 2002
+Figura 1: ráfico de tiempo y gráficos ACF y PACF para los datos de
+equipos eléctricos ajustados estacionalmente diferenciados.
 </p>
 </div>
 <div class="panel-heading tutorial-quiz-title"></div>
@@ -379,13 +457,7 @@ Figura 1: Inflación interanual en España Enero 1982 – Diciembre 2002
 </div>
 <div id="section-pregunta-2" class="section level3">
 <h3><strong>Pregunta 2</strong></h3>
-<p>Sea la siguiente gráfica:</p>
-<div class="figure" style="text-align: center">
-<img src="images/Imagen5.png" alt="Figura 2: Viviendas iniciadas en España Enero 1989 – Diciembre 2001" width="70%" />
-<p class="caption">
-Figura 2: Viviendas iniciadas en España Enero 1989 – Diciembre 2001
-</p>
-</div>
+<p>Selecione la afirmación que considere verdadera:</p>
 <div class="panel-heading tutorial-quiz-title"></div>
 <div class="panel panel-default tutorial-question-container">
 <div data-label="quiz_2-1" class="tutorial-question panel-body">
@@ -398,12 +470,11 @@ Figura 2: Viviendas iniciadas en España Enero 1989 – Diciembre 2001
 </div>
 <div id="section-pregunta-3" class="section level3">
 <h3><strong>Pregunta 3</strong></h3>
-<p>Sea la siguiente gráfica:</p>
+<p>Sea la siguiente gráfica de un serie no diferenciada:</p>
 <div class="figure" style="text-align: center">
-<img src="images/Imagen6.png" alt="Figura 3: Tasa de variación diaria del IBEX 353 de enero de 2002 – 30 de diciembre de 200" width="70%" />
+<img src="images/Imagen6.png" alt="Figura 2: ACF y PACF de un serie temporal" width="100%" />
 <p class="caption">
-Figura 3: Tasa de variación diaria del IBEX 353 de enero de 2002 – 30 de
-diciembre de 200
+Figura 2: ACF y PACF de un serie temporal
 </p>
 </div>
 <div class="panel-heading tutorial-quiz-title"></div>
@@ -418,12 +489,18 @@ diciembre de 200
 </div>
 <div id="section-pregunta-4" class="section level3">
 <h3><strong>Pregunta 4</strong></h3>
-<p>Sea la siguiente gráfica:</p>
+<p>Sea las siguientes gráficas funciones de ACF y PACF de una serie
+estacionaria:</p>
 <div class="figure" style="text-align: center">
-<img src="images/Imagen7.png" alt="Figura 4: Temperatura media registrada en Madrid-Retiro Enero 1989 – Diciembre 2001" width="70%" />
+<img src="images/Imagen7.png" alt="Figura 3: ACF" width="100%" />
 <p class="caption">
-Figura 4: Temperatura media registrada en Madrid-Retiro Enero 1989 –
-Diciembre 2001
+Figura 3: ACF
+</p>
+</div>
+<div class="figure" style="text-align: center">
+<img src="images/Imagen6.png" alt="Figura 4: PACF" width="100%" />
+<p class="caption">
+Figura 4: PACF
 </p>
 </div>
 <div class="panel-heading tutorial-quiz-title"></div>
@@ -438,12 +515,11 @@ Diciembre 2001
 </div>
 <div id="section-pregunta-5" class="section level3">
 <h3><strong>Pregunta 5</strong></h3>
-<p>Sea la siguiente gráfica:</p>
+<p>Sea la siguiente figura conformada por tres ACF:</p>
 <div class="figure" style="text-align: center">
-<img src="images/Imagen8.png" alt="Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947 – 2002" width="70%" />
+<img src="images/Imagen8.png" alt="Figura 5: ACF para tres series" width="100%" />
 <p class="caption">
-Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947
-– 2002
+Figura 5: ACF para tres series
 </p>
 </div>
 <div class="panel-heading tutorial-quiz-title"></div>
@@ -456,117 +532,94 @@ Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947
 </div>
 </div>
 </div>
-<div id="section-pregunta-6" class="section level3">
-<h3><strong>Pregunta 6</strong></h3>
-<p>Suponga la siguente gráfica corresponde a una de las funciones de
-autocorrelaciones de una serie estacionaria:</p>
-<div class="figure" style="text-align: center">
-<img src="images/Proceso1.png" alt="Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947 – 2002" width="70%" />
-<p class="caption">
-Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947
-– 2002
-</p>
-</div>
-<div class="panel-heading tutorial-quiz-title"></div>
-<div class="panel panel-default tutorial-question-container">
-<div data-label="quiz_6-1" class="tutorial-question panel-body">
-<div id="quiz_6-1-answer_container" class="shiny-html-output"></div>
-<div id="quiz_6-1-message_container" class="shiny-html-output"></div>
-<div id="quiz_6-1-action_button_container" class="shiny-html-output"></div>
-<script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
-</div>
-</div>
-</div>
-<div id="section-pregunta-7" class="section level3">
-<h3><strong>Pregunta 7</strong></h3>
-<p>Suponga la siguente gráfica corresponde a una de las funciones de
-autocorrelaciones de una serie estacionaria:</p>
-<div class="figure" style="text-align: center">
-<img src="images/Proceso2.png" alt="Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947 – 2002" width="70%" />
-<p class="caption">
-Figura 5: Tasa logarítmica de variación anual del PIB real en EEUU 1947
-– 2002
-</p>
-</div>
-<div class="panel-heading tutorial-quiz-title"></div>
-<div class="panel panel-default tutorial-question-container">
-<div data-label="quiz_7-1" class="tutorial-question panel-body">
-<div id="quiz_7-1-answer_container" class="shiny-html-output"></div>
-<div id="quiz_7-1-message_container" class="shiny-html-output"></div>
-<div id="quiz_7-1-action_button_container" class="shiny-html-output"></div>
-<script>if (Tutorial.triggerMathJax) Tutorial.triggerMathJax()</script>
-</div>
-</div>
-</div>
 </div>
 <div id="section-problemas" class="section level2">
 <h2><strong>PROBLEMAS</strong></h2>
 <div id="section-problema-1" class="section level3">
 <h3><strong>Problema 1</strong></h3>
-<p>Usted cuenta con un vector ya cargado llamado <span
-class="math inline">\(Jhon_y_Jhonson\)</span>, este contiene los
-beneficios trimestrales de la empresa Johnson &amp; Johnson entre 1960 y
-1980. Escriba el código faltante en R para responder a las siguientes
-preguntas:</p>
+<p>Suponga usted cuenta con una serie en un archivo en formato .txt
+llamanda como “S1”. La carpeta que contiene el archivo tiene como
+directorio “./data”; escriba el código necesario para:</p>
 <ul>
-<li>Defina la serie temporal como “Ts_jj” y grafíquela</li>
-<li>¿Cuál es el valor de la serie para el tercer trimestre de 1980?</li>
-<li>¿Cuáles son las principales características (tendencia,
-estacionalidad) de esta serie?</li>
+<li>Importar los datos de la serie S1</li>
+<li>Cree el objeto ts llamándolo “Serie”, no establezca ninguna fecha
+para la serie.</li>
+<li>Grafique la serie, ¿Considera que es estacionaria?</li>
+<li>Use la prueba formal de Dickey y Fuller</li>
+<li>Grafique la PACF y ACF y concluya cuál proceso de los vistos es el
+pertinente para modelar la serie</li>
+<li>Ajuste el modelo identificado según la PACF y ACF. Finalmente
+imprimalo.</li>
 </ul>
+<p>Nota: No olvide llamar las librerias necesarias.</p>
 <div class="tutorial-exercise" data-label="p1" data-completion="1"
-data-diagnostics="1" data-startover="1" data-lines="5">
-<pre class="text"><code>Jhon_y_Jhonson = scan(&#39;http://verso.mat.uam.es/~joser.berrendero/datos/jj.dat&#39;)</code></pre>
+data-diagnostics="1" data-startover="1" data-lines="20">
 <script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
 </div>
 <div class="tutorial-exercise-support" data-label="p1-hint-1"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code>Ts_jj=ts(Jhon_y_Jhonson,freq=4) # Definiendo la serie trimestral</code></pre>
+<pre class="text"><code>#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+Serie=read.table(&quot;./data/S1.txt&quot;) 
+
+tseries::adf.test(ts) # prueba formal</code></pre>
 </div>
 <div class="tutorial-exercise-support" data-label="p1-hint-2"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code>#Para conocer cuál es el valor del beneficio asociado a determinada fecha, primero debe conocer qué tiempo se asignó R a cada valor, esto se consigue con la función time(Ts_jj)
-
-time(Ts_jj)
-
-# Posteriormente deberá referenciar dicho valor en el vector ts, es decir: 
-
-Ts_jj[time(Ts_jj)==Tiempo_encontrado]</code></pre>
+<pre class="text"><code>Modelo=arima(Serie, c(1,0,0), method=&quot;ML&quot;) # para crear el modelo</code></pre>
 </div>
 <div class="tutorial-exercise-support" data-label="p1-solution"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code>Ts_jj=ts(Jhon_y_Jhonson,freq=4,start = 1960) # Definiendo la serie trimestral
-plot(Ts_jj) # Gráfica
-time(Ts_jj) # conocer las fechas asignadas a cada valor
-Ts_jj[time(Ts_jj)==1980.50] # Extraer el feneficio asociado a la fecha del tercer trimetres en 1980</code></pre>
+<pre class="text"><code>#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+S1=read.table(&quot;./data/S1.txt&quot;) 
+
+# Crear y graficar  la serie ¿Es estacionaria?
+Serie=ts(S1)
+plot(Serie) # Sí parece ser estacionaria
+
+# Prueba formal de Dickey y Fuller 
+tseries::adf.test(Serie) # es estacionaria
+
+# graficando la ACF y PACF
+acf(Serie)
+pacf(Serie)
+
+# La acf muestra oscilaciones amortiguadas para k= 1, por lo que podemos pensar en un MA(1)
+# La pacf decrece casi cero para rezagos igual a 2. Por lo que se puede pensar en un AR(2)
+
+# Modelo ajustado ARMA(2,1)
+
+Modelo=arima(Serie, c(1,0,0), method=&quot;ML&quot;)
+Modelo</code></pre>
 </div>
 </div>
 <div id="section-problema-2" class="section level3">
 <h3><strong>Problema 2</strong></h3>
-<p>Se le asignó explorar patrones en los vuelos que llegan al Aeropuerto
-Internacional Logan (BOS) de Boston. En este ejercicio, verá la
-estructura y las cualidades de algunos datos en preparación para la
-manipulación de series temporales. La base que debe cargar presenta los
-tiempos de llegada de los vuelos. Escriba las lineas de código
-necesarias para realizar las siguientes tareas:</p>
+<p>Suponga usted cuenta con una serie en un archivo en formato .txt
+llamanda como “S2”. La carpeta que contiene el archivo tiene como
+directorio “./data”; escriba el código necesario para:</p>
 <ul>
-<li><p>Importe la los datos, estos se encuentran en un archivo con
-formato .RData de nombre “Vuelos”; la carpeta que los contiene tiene
-como directorio “./data”</p></li>
-<li><p>Los datos presentan una columna de la fecha de cada vuelo,
-establezca dicha columna como referencia para crear una serie temporal
-de la variable “total_flights”. En cuentre la fecha de inicio y la
-frecuencia correcta de la variable fecha. Finalmente cree el objeto tipo
-<span class="math inline">\(ts\)</span> y llámelo “Vuelo_TS”.</p></li>
-<li><p>Grafique la serie</p></li>
-<li><p>Finalmente realice los gráficos de las autocorrelaciones (ACF y
-PACF).</p></li>
+<li>Importar los datos de la serie S2</li>
+<li>Cree el objeto ts llamándolo “Serie”, no establezca ninguna fecha
+para la serie.</li>
+<li>Grafique la serie, ¿Considera que es estacionaria?</li>
+<li>Use la prueba formal de Dickey y Fuller</li>
+<li>Grafique la PACF y ACF y concluya cuál proceso de los vistos es el
+pertinente para modelar la serie</li>
+<li>Ajuste el modelo identificado según la PACF y ACF. Finalmente
+imprimalo.</li>
 </ul>
+<p>Nota: No olvide llamar las librerias necesarias.</p>
 <div class="tutorial-exercise" data-label="p2" data-completion="1"
-data-diagnostics="1" data-startover="1" data-lines="8">
+data-diagnostics="1" data-startover="1" data-lines="20">
 <script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
 </div>
 <div class="tutorial-exercise-support" data-label="p2-hint-1"
@@ -574,59 +627,108 @@ data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
 <pre class="text"><code># Para leer los datos en formato RData se usa la función readRDS()
 
-readRDS(&quot;./data/Vue..&quot;)</code></pre>
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+Serie=read.table(&quot;./data/...txt&quot;) 
+
+tseries::adf.test(ts) # prueba formal</code></pre>
 </div>
 <div class="tutorial-exercise-support" data-label="p2-hint-2"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code># Note que la frecuencia es mensual, freq=12, sólo resta establecer la fecha de inicio
-
-
-Vuelo_TS=ts(Vuelos$...,freq=12,start = ...) </code></pre>
+<pre class="text"><code># arima(Serie, c(0,0,..), method=&quot;ML&quot;)</code></pre>
 </div>
 <div class="tutorial-exercise-support" data-label="p2-solution"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code>Vuelos=readRDS(&quot;./data/Vuelos.RData&quot;) # Importar datos
-Vuelo_TS=ts(Vuelos$total_flights,freq=12,start = 2010) # La frecuencia es mensual
-plot(Vuelo_TS) # Gráfica
-acf(Vuelo_TS) # ACF
-pacf(Vuelo_TS) # PACF</code></pre>
+<pre class="text"><code>#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+S2=read.table(&quot;./data/S2.txt&quot;) 
+
+# Crear y graficar  la serie ¿Es estacionaria?
+Serie=ts(S2)
+plot(Serie) # Sí parece ser estacionaria
+
+# Prueba formal de Dickey y Fuller 
+tseries::adf.test(Serie) # es estacionaria
+
+# graficando la ACF y PACF
+acf(S2)
+pacf(S2)
+
+# El ACF teórico se corta con el rezago 1, mientras que el PACF se reduce para k=1 
+
+# Modelo ajustado MA(1)
+
+Modelo=arima(Serie, c(0,0,1), method=&quot;ML&quot;)
+Modelo</code></pre>
 </div>
 </div>
 <div id="section-problema-3" class="section level3">
 <h3><strong>Problema 3</strong></h3>
-<p>Suponga usted cuenta con una serie en un archivo en formato .txt
-llamanda como “S3”. La carpeta que contiene el archivo tiene como
-directorio “./data”; escriba el código necesario para:</p>
+<p>Usted cuenta con una serie de temperaturas medidas en en un archivo
+en formato .txt llamanda como “Temperatura”. La carpeta que contiene el
+archivo tiene como directorio “./data”; escriba el código necesario
+para:</p>
 <ul>
-<li>Importar los datos de la serie S3</li>
-<li>Cree el objeto ts llamándolo “Serie”, no establezca ninguna fecha
-para la serie.</li>
-<li>Grafique la serie, ¿Considera que es estacionaria?</li>
-<li>Grafique la PACF y ACF y concluya cuál proceso de los vistos es el
-pertinente para modelar la serie</li>
+<li>Importar los datos y crear la serie.</li>
+<li>La serie es estacionaria</li>
+<li>Descomponga la serie. Además indique si necesita ser diferenciada.
+Indique el valor de <span class="math inline">\(d\)</span>.</li>
+<li>Grafique la PACF y ACF y propornga tres modelos. Compárelos con el
+criterio de AIC.</li>
+<li>Defina el modelo selecionado e imprímalo</li>
 </ul>
 <div class="tutorial-exercise" data-label="p3" data-completion="1"
-data-diagnostics="1" data-startover="1" data-lines="8">
+data-diagnostics="1" data-startover="1" data-lines="20">
 <script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
 </div>
 <div class="tutorial-exercise-support" data-label="p3-hint"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code># Para importar datos en formato .txt use:
-
-read.table(&quot;./data/..&quot;) </code></pre>
+<pre class="text"><code># Para calcular el AIC: AIC(Modelo1,Modelo2,...)</code></pre>
 </div>
 <div class="tutorial-exercise-support" data-label="p3-solution"
 data-completion="1" data-diagnostics="1" data-startover="1"
 data-lines="0">
-<pre class="text"><code>Serie=read.table(&quot;./data/S3.txt&quot;) # Se carga los datos de al serie
-plot(Serie) # Se grafica la serie
-par(mfrow=c(1,2)) # Permite unir los siguientes gráficos en un solo cuadrante (NO ES NECESARIO)
-ACF=acf(Serie)
-PACF=pacf(Serie)
-# La serie pertenece a un proceso AR(1)</code></pre>
+<pre class="text"><code>Temperatura=read.table(&quot;./data/Temperatura.txt&quot;) 
+
+Temperatura=ts(Temperatura)
+
+# gŕafica de la serie
+plot(Temperatura)
+tseries::adf.test(Temperatura) # NO es estacionaria
+
+# Los datos son claramente no estacionarios, ya que la serie se desplaza hacia arriba y hacia abajo durante largos períodos.
+
+# Descomposición de la serie
+# Descomposición=decompose(Temperatura)  El error indica que la serie no presenta periodos (estacionalidad = 0)
+
+# Diferenciación
+library(&quot;forecast&quot;)
+ndiffs(Temperatura) # Diferenciaciones necesarias para eliminar la tendencia
+
+Serie_dif=diff(Temperatura,differences=1)
+
+acf(Serie_dif)
+pacf(Serie_dif)
+
+# Vemos que la muestra ACF se corta después del retraso 2 y la muestra PACF se corta después del retraso 1. Por lo tanto, se pueden proponer tres modelos ARMA para los datos
+# SE comparan 3 modelos con el criterio de AIC
+
+arimaModel_1=arima(Temperatura, order=c(0,1,2))
+arimaModel_2=arima(Temperatura, order=c(1,1,0))
+arimaModel_3=arima(Temperatura, order=c(1,1,2))
+
+AIC(arimaModel_1,arimaModel_2,arimaModel_3) # Se seleciona el modelo con menor AIC
+
+# Finalmente el modelo es ARIMA(1,1,2) 
+
+Modelo=arima(Temperatura, order=c(1,1,2))
+Modelo</code></pre>
 </div>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
@@ -679,259 +781,184 @@ session$onSessionEnded(function() {
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_1-1", question = structure("Con base en la figura 1 puede afirmar de la tendencia:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_cd49e0", 
-    option = "La serie presenta un tendencia lineal negativa", 
-    value = "La serie presenta un tendencia lineal negativa", 
-    label = structure("La serie presenta un tendencia lineal negativa", html = TRUE, class = c("html", 
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_1-1", question = structure("Con base en la figura 1 puede afirmar que:", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_9d090d6", 
+    option = "Los datos son claramente no estacionarios, ya que la serie se desplaza hacia arriba y hacia abajo durante largos períodos.", 
+    value = "Los datos son claramente no estacionarios, ya que la serie se desplaza hacia arriba y hacia abajo durante largos períodos.", 
+    label = structure("Los datos son claramente no estacionarios, ya que la serie se desplaza hacia arriba y hacia abajo durante largos períodos.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_4bc3480", 
-    option = "La serie presenta una tendencia estocástica (aleatoria) en su evolución temporal", 
-    value = "La serie presenta una tendencia estocástica (aleatoria) en su evolución temporal", 
-    label = structure("La serie presenta una tendencia estocástica (aleatoria) en su evolución temporal", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_7354aa4", 
+    option = "La PACF que se muestra en la figura sugiere un modelo AR(3). Entonces, un modelo candidato inicial es un ARIMA (3,1,0).", 
+    value = "La PACF que se muestra en la figura sugiere un modelo AR(3). Entonces, un modelo candidato inicial es un ARIMA (3,1,0).", 
+    label = structure("La PACF que se muestra en la figura sugiere un modelo AR(3). Entonces, un modelo candidato inicial es un ARIMA (3,1,0).", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_990197", 
-    option = "La serie es de tendencia estacionaria", value = "La serie es de tendencia estacionaria", 
-    label = structure("La serie es de tendencia estacionaria", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_9056df1", 
+    option = "La PACF que se muestra en la figura sugiere un modelo ARMA(3,1). Entonces, un modelo candidato inicial es un ARIMA (3,0,1).", 
+    value = "La PACF que se muestra en la figura sugiere un modelo ARMA(3,1). Entonces, un modelo candidato inicial es un ARIMA (3,0,1).", 
+    label = structure("La PACF que se muestra en la figura sugiere un modelo ARMA(3,1). Entonces, un modelo candidato inicial es un ARIMA (3,0,1).", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_60bcde0", 
-    option = "La serie presenta una tendencia lineal positiva", 
-    value = "La serie presenta una tendencia lineal positiva", 
-    label = structure("La serie presenta una tendencia lineal positiva", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_d9cccb6", 
+    option = "La ACF que se muestra en la figura sugiere un modelo ARMA(1,1). Entonces, un modelo candidato inicial es un ARIMA (1,1,1).", 
+    value = "La ACF que se muestra en la figura sugiere un modelo ARMA(1,1). Entonces, un modelo candidato inicial es un ARIMA (1,1,1).", 
+    label = structure("La ACF que se muestra en la figura sugiere un modelo ARMA(1,1). Entonces, un modelo candidato inicial es un ARIMA (1,1,1).", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
 "character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("La serie evoluciona alrededor de un nivel que cambia sin seguir aparentemente un patrón concreto, es decir, la tendencia negativa no es clara, pues en 0 se corrige.", html = TRUE, class = c("html", 
+"character"))), messages = list(correct = structure("Correcto, la PACF corta para rezagos mayores a 3, por lo es el modelo ARIMA(3,1,0) es un buen candidato. Además que la serie está diferenciada (d=1)", html = TRUE, class = c("html", 
 "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "quiz_1-1-answer", question = "quiz_1-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1462609416.81892, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1104933581.48548, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
 
 
 <script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_2-1", question = structure("Con base en la figura 2 puede afirmar que:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_d842fb4", 
-    option = "La serie presenta un tendencia lineal positiva", 
-    value = "La serie presenta un tendencia lineal positiva", 
-    label = structure("La serie presenta un tendencia lineal positiva", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_610f814", 
-    option = "La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", 
-    value = "La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", 
-    label = structure("La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", html = TRUE, class = c("html", 
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_2-1", question = structure("Puede afirmar que:", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_b4d245d", 
+    option = "A una serie temporal es posible asociar varios modelos, por lo cual es pertinente plantear varios y compararlos. Un indicador posible es el AIC, con el  cual se selecciona el modelo con menor valor en este", 
+    value = "A una serie temporal es posible asociar varios modelos, por lo cual es pertinente plantear varios y compararlos. Un indicador posible es el AIC, con el  cual se selecciona el modelo con menor valor en este", 
+    label = structure("A una serie temporal es posible asociar varios modelos, por lo cual es pertinente plantear varios y compararlos. Un indicador posible es el AIC, con el  cual se selecciona el modelo con menor valor en este", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_5a9b01e", 
-    option = "La serie es de tendencia estocástica y varianza constante", 
-    value = "La serie es de tendencia estocástica y varianza constante", 
-    label = structure("La serie es de tendencia estocástica y varianza constante", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_455e19f", 
+    option = "El modelo con el menor AIC siempre es el mejor modelo para la serie de tiempo, independientemente de la complejidad del modelo", 
+    value = "El modelo con el menor AIC siempre es el mejor modelo para la serie de tiempo, independientemente de la complejidad del modelo", 
+    label = structure("El modelo con el menor AIC siempre es el mejor modelo para la serie de tiempo, independientemente de la complejidad del modelo", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!", html = TRUE, class = c("html", 
+    "character")), type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_c70e85a", 
+    option = "Si dos modelos tienen valores AIC similares, entonces el modelo más simple siempre es mejor que el modelo más complejo.", 
+    value = "Si dos modelos tienen valores AIC similares, entonces el modelo más simple siempre es mejor que el modelo más complejo.", 
+    label = structure("Si dos modelos tienen valores AIC similares, entonces el modelo más simple siempre es mejor que el modelo más complejo.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e47820d", 
-    option = "La serie es estacionaria en varianza pero no en media", 
-    value = "La serie es estacionaria en varianza pero no en media", 
-    label = structure("La serie es estacionaria en varianza pero no en media", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_da510c2", 
+    option = "El modelo con el menor AIC siempre es el mejor modelo para la serie de tiempo, independientemente de la complejidad del modelo.", 
+    value = "El modelo con el menor AIC siempre es el mejor modelo para la serie de tiempo, independientemente de la complejidad del modelo.", 
+    label = structure("El modelo con el menor AIC siempre es el mejor modelo para la serie de tiempo, independientemente de la complejidad del modelo.", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
 "character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("Al igual que la serie de la figura 1, esta no presenta una tendencia clara, además la variabilidad parece crecer con los años.", html = TRUE, class = c("html", 
+"character"))), messages = list(correct = structure("¡Correcto! Es importante recordar que el AIC es solo un indicador para seleccionar modelos y debe ser utilizado junto con otras técnicas de evaluación", html = TRUE, class = c("html", 
 "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "quiz_2-1-answer", question = "quiz_2-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 442250195.794061, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 2135370121.00564, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_3-1", question = structure("Con base en la figura 3 puede afirmar que:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_a3e6c43", 
-    option = "La serie tiene tendencia y variabilidad constante", 
-    value = "La serie tiene tendencia y variabilidad constante", 
-    label = structure("La serie tiene tendencia y variabilidad constante", html = TRUE, class = c("html", 
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_3-1", question = structure("Con base en la figura 2 puede afirmar que:", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_6716d4a", 
+    option = "Dado que la PACF decrece a partir del rezago tres, se puede pensar en un modelo AR(3).\n", 
+    value = "Dado que la PACF decrece a partir del rezago tres, se puede pensar en un modelo AR(3).\n", 
+    label = structure("Dado que la PACF decrece a partir del rezago tres, se puede pensar en un modelo AR(3).", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_2d26308", 
-    option = "La serie no es estacionaria débil, pues la tendencia y la varianza no son constantes en el tiempo", 
-    value = "La serie no es estacionaria débil, pues la tendencia y la varianza no son constantes en el tiempo", 
-    label = structure("La serie no es estacionaria débil, pues la tendencia y la varianza no son constantes en el tiempo", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_2411c52", 
-    option = "La serie es estacionaria, pues tanto la media como la varianza son constantes en el tiempo", 
-    value = "La serie es estacionaria, pues tanto la media como la varianza son constantes en el tiempo", 
-    label = structure("La serie es estacionaria, pues tanto la media como la varianza son constantes en el tiempo", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_f417642", 
+    option = "Dado que la PACF decrece a partir del rezago tres y la ACF es nula a partir del primer rezago, se puede pensar en un modelo ARMA(3,1).", 
+    value = "Dado que la PACF decrece a partir del rezago tres y la ACF es nula a partir del primer rezago, se puede pensar en un modelo ARMA(3,1).", 
+    label = structure("Dado que la PACF decrece a partir del rezago tres y la ACF es nula a partir del primer rezago, se puede pensar en un modelo ARMA(3,1).", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!.", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_9ee44de", 
-    option = "La serie es estacionaria en media pero no en varianza", 
-    value = "La serie es estacionaria en media pero no en varianza", 
-    label = structure("La serie es estacionaria en media pero no en varianza", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a670dd4", 
+    option = "Dado la ACF es nula a partir del primer rezago, se puede pensar en un modelo AR(1).", 
+    value = "Dado la ACF es nula a partir del primer rezago, se puede pensar en un modelo AR(1).", 
+    label = structure("Dado la ACF es nula a partir del primer rezago, se puede pensar en un modelo AR(1).", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!.", html = TRUE, class = c("html", 
+    "character")), type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_fc24dfb", 
+    option = "Dado la ACF es nula a partir del primer rezago, se puede pensar en un modelo MA(1)", 
+    value = "Dado la ACF es nula a partir del primer rezago, se puede pensar en un modelo MA(1)", 
+    label = structure("Dado la ACF es nula a partir del primer rezago, se puede pensar en un modelo MA(1)", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
 "character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("La tendencia es constante, más sin embargo, la variabilidad no; pues no es constante a lo largo del tiempo (disminuye al final)", html = TRUE, class = c("html", 
+"character"))), messages = list(correct = structure("La PACF decrece a partir de k=1 y la ACF es nula para k&gt;1, son las condiciones de un MA(1)", html = TRUE, class = c("html", 
 "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "quiz_3-1-answer", question = "quiz_3-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1196637549.44277, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 153459160.42854, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
 
 
 <script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_4-1", question = structure("Con base en la figura 4 puede afirmar que:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_5e93787", 
-    option = "La serie sólo tiene media estacionaria", value = "La serie sólo tiene media estacionaria", 
-    label = structure("La serie sólo tiene media estacionaria", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_c8bca8", 
-    option = "La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", 
-    value = "La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", 
-    label = structure("La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_c7aa096", 
-    option = "La serie no es estacionaria, pues la varianza aumenta con el tiempo", 
-    value = "La serie no es estacionaria, pues la varianza aumenta con el tiempo", 
-    label = structure("La serie no es estacionaria, pues la varianza aumenta con el tiempo", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!.", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_e736c3c", 
-    option = "La serie es estacionaria, pues tanto la media como la varianza son canstantes en el tiempo", 
-    value = "La serie es estacionaria, pues tanto la media como la varianza son canstantes en el tiempo", 
-    label = structure("La serie es estacionaria, pues tanto la media como la varianza son canstantes en el tiempo", html = TRUE, class = c("html", 
-    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
-"character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("La tendencia y la varianza es constante respecto al tiempo", html = TRUE, class = c("html", 
-"character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), message = NULL, post_message = NULL), ids = list(
-    answer = "quiz_4-1-answer", question = "quiz_4-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1228403922.42798, 
-    options = list()), class = c("learnr_radio", "tutorial_question"
+learnr:::question_prerendered_chunk(structure(list(type = "learnr_checkbox", label = "quiz_4-1", 
+    question = structure("Con base en la figura 3 y 4 selecione las afirmaciones correctas:", html = TRUE, class = c("html", 
+    "character")), answers = list(structure(list(id = "lnr_ans_fcca35", 
+        option = "Para obtener el valor p de AR para el modelo ARMA, veremos las gráficas PACF. Los picos están en 1 y 3. Por lo tanto, es AR(1) y AR(3).", 
+        value = "Para obtener el valor p de AR para el modelo ARMA, veremos las gráficas PACF. Los picos están en 1 y 3. Por lo tanto, es AR(1) y AR(3).", 
+        label = structure("Para obtener el valor p de AR para el modelo ARMA, veremos las gráficas PACF. Los picos están en 1 y 3. Por lo tanto, es AR(1) y AR(3).", html = TRUE, class = c("html", 
+        "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_e53698b", 
+        option = "Para obtener el valor q, veremos el gráfico ACF. Los picos están en 1 y 3. Por lo tanto, es MA(1) y MA(3).", 
+        value = "Para obtener el valor q, veremos el gráfico ACF. Los picos están en 1 y 3. Por lo tanto, es MA(1) y MA(3).", 
+        label = structure("Para obtener el valor q, veremos el gráfico ACF. Los picos están en 1 y 3. Por lo tanto, es MA(1) y MA(3).", html = TRUE, class = c("html", 
+        "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_9a2a18a", 
+        option = "En los gráficos ACF y PACF se evidencia un modelo ARMA(3,0)", 
+        value = "En los gráficos ACF y PACF se evidencia un modelo ARMA(3,0)", 
+        label = structure("En los gráficos ACF y PACF se evidencia un modelo ARMA(3,0)", html = TRUE, class = c("html", 
+        "character")), correct = FALSE, message = structure("Incorrecto. Intenta de nuevo!.", html = TRUE, class = c("html", 
+        "character")), type = "literal"), class = c("tutorial_question_answer", 
+    "tutorial_quiz_answer")), structure(list(id = "lnr_ans_102a4d8", 
+        option = "En los gráficos ACF y PACF, no está claro si se están reduciendo o cortando; por lo cual es pertinente plantear varios modelos y compararlos", 
+        value = "En los gráficos ACF y PACF, no está claro si se están reduciendo o cortando; por lo cual es pertinente plantear varios modelos y compararlos", 
+        label = structure("En los gráficos ACF y PACF, no está claro si se están reduciendo o cortando; por lo cual es pertinente plantear varios modelos y compararlos", html = TRUE, class = c("html", 
+        "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+    "tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
+    "character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
+    "character"))), messages = list(correct = structure("Correcto, con ARMA, los órdenes de p y q para AR y MA pueden ser más de uno.", html = TRUE, class = c("html", 
+    "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
+    "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
+    "character")), message = NULL, post_message = NULL), ids = list(
+        answer = "quiz_4-1-answer", question = "quiz_4-1"), loading = NULL, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 1335673749.87803, 
+    options = list()), class = c("learnr_checkbox", "tutorial_question"
 )), session = session)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
 learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_5-1", question = structure("Con base en la figura 5 puede afirmar que:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_173990f", 
-    option = "La serie sólo tiene media estacionaria", value = "La serie sólo tiene media estacionaria", 
-    label = structure("La serie sólo tiene media estacionaria", html = TRUE, class = c("html", 
+"character")), answers = list(structure(list(id = "lnr_ans_f0f3ff6", 
+    option = "Las tres ACF provienen de un proceso AR(1)", value = "Las tres ACF provienen de un proceso AR(1)", 
+    label = structure("Las tres ACF provienen de un proceso AR(1)", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_ec2c43a", 
-    option = "La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", 
-    value = "La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", 
-    label = structure("La serie no es estacionaria, pues la tendencia y la varianza no son constantes en el tiempo", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_22109db", 
-    option = "La serie es estacionaria", value = "La serie es estacionaria", 
-    label = structure("La serie es estacionaria", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_ecc9509", 
+    option = "Las tres  ACF provienen de un proceso MA(1)", value = "Las tres  ACF provienen de un proceso MA(1)", 
+    label = structure("Las tres  ACF provienen de un proceso MA(1)", html = TRUE, class = c("html", 
+    "character")), correct = FALSE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_4d9fdb4", 
+    option = "Las tres ACF provienen de series ruido blanco", 
+    value = "Las tres ACF provienen de series ruido blanco", 
+    label = structure("Las tres ACF provienen de series ruido blanco", html = TRUE, class = c("html", 
     "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_4faa03f", 
-    option = "La serie no presenta varianza constante, pues esta varía respecto al tiempo", 
-    value = "La serie no presenta varianza constante, pues esta varía respecto al tiempo", 
-    label = structure("La serie no presenta varianza constante, pues esta varía respecto al tiempo", html = TRUE, class = c("html", 
+"tutorial_quiz_answer")), structure(list(id = "lnr_ans_ab99bbd", 
+    option = "Las tres ACF provienen de un proceso ARIMA(0,0,1)", 
+    value = "Las tres ACF provienen de un proceso ARIMA(0,0,1)", 
+    label = structure("Las tres ACF provienen de un proceso ARIMA(0,0,1)", html = TRUE, class = c("html", 
     "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
     "character")), type = "literal"), class = c("tutorial_question_answer", 
 "tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
 "character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("La tendencia y la varianza es constante respecto al tiempo", html = TRUE, class = c("html", 
+"character"))), messages = list(correct = structure("Correcto, note que todas las correlaciones son nulas independientemente del rezago", html = TRUE, class = c("html", 
 "character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
 "character")), message = NULL, post_message = NULL), ids = list(
     answer = "quiz_5-1-answer", question = "quiz_5-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1515786748.79416, 
-    options = list()), class = c("learnr_radio", "tutorial_question"
-)), session = session)
-</script>
-
-
-<script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_6-1", question = structure("Con base en la figura 6 puede afirmar que:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_118c21c", 
-    option = "La serie pertenece a un modelo MA(2), dado que la PACF se anula con resagos mayores a 2", 
-    value = "La serie pertenece a un modelo MA(2), dado que la PACF se anula con resagos mayores a 2", 
-    label = structure("La serie pertenece a un modelo MA(2), dado que la PACF se anula con resagos mayores a 2", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_7acdf2d", 
-    option = "La serie pertenece a un modelo MA(1), dado que la PACF se anula con resagos mayores a 1", 
-    value = "La serie pertenece a un modelo MA(1), dado que la PACF se anula con resagos mayores a 1", 
-    label = structure("La serie pertenece a un modelo MA(1), dado que la PACF se anula con resagos mayores a 1", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_58f4924", 
-    option = "La serie pertenece a un modelo AR(2), dado que la PACF se anula con resagos mayores a 2", 
-    value = "La serie pertenece a un modelo AR(2), dado que la PACF se anula con resagos mayores a 2", 
-    label = structure("La serie pertenece a un modelo AR(2), dado que la PACF se anula con resagos mayores a 2", html = TRUE, class = c("html", 
-    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_4d6f96b", 
-    option = "La serie pertenece a un modelo AR(1), dado que la PACF se anula con resagos mayores a 1", 
-    value = "La serie pertenece a un modelo AR(1), dado que la PACF se anula con resagos mayores a 1", 
-    label = structure("La serie pertenece a un modelo AR(1), dado que la PACF se anula con resagos mayores a 1", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
-"character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("Dado que la PACF se anula para resagos mayores a 2, es correcto suponer que un modelo adecuado para modelar la serie es el AR(2)", html = TRUE, class = c("html", 
-"character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), message = NULL, post_message = NULL), ids = list(
-    answer = "quiz_6-1-answer", question = "quiz_6-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1999014070.06914, 
-    options = list()), class = c("learnr_radio", "tutorial_question"
-)), session = session)
-</script>
- 
-<script type="application/shiny-prerendered" data-context="server">
-learnr:::question_prerendered_chunk(structure(list(type = "learnr_radio", label = "quiz_7-1", question = structure("Con base en la figura 6 puede afirmar que:", html = TRUE, class = c("html", 
-"character")), answers = list(structure(list(id = "lnr_ans_f067782", 
-    option = "La serie pertenece a un modelo MA(2), dado que la PACF se anula con resagos mayores a 2", 
-    value = "La serie pertenece a un modelo MA(2), dado que la PACF se anula con resagos mayores a 2", 
-    label = structure("La serie pertenece a un modelo MA(2), dado que la PACF se anula con resagos mayores a 2", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a1dcf1f", 
-    option = "La serie pertenece a un modelo MA(1), dado que la ACF se anula con resagos mayores a 1", 
-    value = "La serie pertenece a un modelo MA(1), dado que la ACF se anula con resagos mayores a 1", 
-    label = structure("La serie pertenece a un modelo MA(1), dado que la ACF se anula con resagos mayores a 1", html = TRUE, class = c("html", 
-    "character")), correct = TRUE, message = NULL, type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_20af59b", 
-    option = "La serie pertenece a un modelo AR(2), dado que la ACF se anula con resagos mayores a 2", 
-    value = "La serie pertenece a un modelo AR(2), dado que la ACF se anula con resagos mayores a 2", 
-    label = structure("La serie pertenece a un modelo AR(2), dado que la ACF se anula con resagos mayores a 2", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No, pero no…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer")), structure(list(id = "lnr_ans_a7846c7", 
-    option = "La serie pertenece a un modelo AR(1), dado que la ACF se anula con resagos mayores a 1", 
-    value = "La serie pertenece a un modelo AR(1), dado que la ACF se anula con resagos mayores a 1", 
-    label = structure("La serie pertenece a un modelo AR(1), dado que la ACF se anula con resagos mayores a 1", html = TRUE, class = c("html", 
-    "character")), correct = FALSE, message = structure("No…intentalo de nuevo!", html = TRUE, class = c("html", 
-    "character")), type = "literal"), class = c("tutorial_question_answer", 
-"tutorial_quiz_answer"))), button_labels = list(submit = structure("Enviar respuesta", html = TRUE, class = c("html", 
-"character")), try_again = structure("Intentar de nuevo", html = TRUE, class = c("html", 
-"character"))), messages = list(correct = structure("Dado que la ACF se anula para resagos mayores a 1, es correcto suponer que un modelo adecuado para modelar la serie es MA(1)", html = TRUE, class = c("html", 
-"character")), try_again = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), incorrect = structure("Incorrect", html = TRUE, class = c("html", 
-"character")), message = NULL, post_message = NULL), ids = list(
-    answer = "quiz_7-1-answer", question = "quiz_7-1"), loading = NULL, 
-    random_answer_order = FALSE, allow_retry = TRUE, seed = 1142763709.46786, 
+    random_answer_order = FALSE, allow_retry = TRUE, seed = 2018771811.55994, 
     options = list()), class = c("learnr_radio", "tutorial_question"
 )), session = session)
 </script>
@@ -956,25 +983,27 @@ learnr:::store_exercise_cache(structure(list(label = "p1", global_setup = struct
 "        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
 "        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
 ), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
-    chunks = list(list(label = "p1", code = "Jhon_y_Jhonson = scan('http://verso.mat.uam.es/~joser.berrendero/datos/jj.dat')\n", 
-        opts = list(label = "\"p1\"", exercise = "TRUE", exercise.lines = "5"), 
-        engine = "r")), code_check = NULL, error_check = NULL, 
-    check = structure(c("grade_this({", "  if(identical(.result,(16.02))){", 
-    "    pass(\"¡Muy bien!, obtuvo el valor correcto\")", "  }", 
-    "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
-    "}", "  ", ")", ""), chunk_opts = list(label = "p1-check")), 
-    solution = structure(c("Ts_jj=ts(Jhon_y_Jhonson,freq=4,start = 1960) # Definiendo la serie trimestral", 
-    "plot(Ts_jj) # Gráfica", "time(Ts_jj) # conocer las fechas asignadas a cada valor", 
-    "Ts_jj[time(Ts_jj)==1980.50] # Extraer el feneficio asociado a la fecha del tercer trimetres en 1980"
-    ), chunk_opts = list(label = "p1-solution")), tests = NULL, 
-    options = list(eval = FALSE, echo = TRUE, results = "markup", 
+    chunks = list(list(label = "p1", code = "", opts = list(label = "\"p1\"", 
+        exercise = "TRUE", exercise.lines = "20"), engine = "r")), 
+    code_check = NULL, error_check = NULL, check = structure(c("", 
+    ""), chunk_opts = list(label = "p1-check")), solution = structure(c("#librerias", 
+    "library(tseries) # libreria para la prueba de  Dickey y Fuller ", 
+    "", "# cargar la data", "S1=read.table(\"./data/S1.txt\") ", 
+    "", "# Crear y graficar  la serie ¿Es estacionaria?", "Serie=ts(S1)", 
+    "plot(Serie) # Sí parece ser estacionaria", "", "# Prueba formal de Dickey y Fuller ", 
+    "tseries::adf.test(Serie) # es estacionaria", "", "# graficando la ACF y PACF", 
+    "acf(Serie)", "pacf(Serie)", "", "# La acf muestra oscilaciones amortiguadas para k= 1, por lo que podemos pensar en un MA(1)", 
+    "# La pacf decrece casi cero para rezagos igual a 2. Por lo que se puede pensar en un AR(2)", 
+    "", "# Modelo ajustado ARMA(2,1)", "", "Modelo=arima(Serie, c(1,0,0), method=\"ML\")", 
+    "Modelo", ""), chunk_opts = list(label = "p1-solution")), 
+    tests = NULL, options = list(eval = FALSE, echo = TRUE, results = "markup", 
         tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
         comment = NA, highlight = FALSE, size = "normalsize", 
         background = "#F7F7F7", strip.white = TRUE, cache = 0, 
-        cache.path = "DescriptivaST_cache/html/", cache.vars = NULL, 
+        cache.path = "InferenciaST_cache/html/", cache.vars = NULL, 
         cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
         cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
-        fig.align = "default", fig.path = "DescriptivaST_files/figure-html/", 
+        fig.align = "default", fig.path = "InferenciaST_files/figure-html/", 
         dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
         fig.width = 6.5, fig.height = 4, fig.env = "figure", 
         fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
@@ -986,9 +1015,9 @@ learnr:::store_exercise_cache(structure(list(label = "p1", global_setup = struct
         max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
         exercise.error.check.code = "gradethis_error_checker()", 
         exercise.warn_invisible = FALSE, label = "p1", exercise = TRUE, 
-        exercise.lines = 5, code = c("Jhon_y_Jhonson = scan('http://verso.mat.uam.es/~joser.berrendero/datos/jj.dat')", 
-        ""), out.width.px = 624, out.height.px = 384, params.src = "p1, exercise=TRUE, exercise.lines = 5", 
-        fig.num = 0, exercise.df_print = "paged"), engine = "r", 
+        exercise.lines = 20, code = "", out.width.px = 624, out.height.px = 384, 
+        params.src = "p1, exercise=TRUE, exercise.lines = 20", 
+        fig.num = 0L, exercise.df_print = "paged"), engine = "r", 
     version = "4"), class = c("r", "tutorial_exercise")))
 </script>
 
@@ -1013,22 +1042,27 @@ learnr:::store_exercise_cache(structure(list(label = "p2", global_setup = struct
 "        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
 ), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
     chunks = list(list(label = "p2", code = "", opts = list(label = "\"p2\"", 
-        exercise = "TRUE", exercise.lines = "8"), engine = "r")), 
+        exercise = "TRUE", exercise.lines = "20"), engine = "r")), 
     code_check = NULL, error_check = NULL, check = structure(c("grade_this({", 
     "  if(identical(.result, .solution)){", "    pass(\"¡Muy bien!\")", 
     "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
-    "})"), chunk_opts = list(label = "p2-check")), solution = structure(c("Vuelos=readRDS(\"./data/Vuelos.RData\") # Importar datos", 
-    "Vuelo_TS=ts(Vuelos$total_flights,freq=12,start = 2010) # La frecuencia es mensual", 
-    "plot(Vuelo_TS) # Gráfica", "acf(Vuelo_TS) # ACF", "pacf(Vuelo_TS) # PACF"
-    ), chunk_opts = list(label = "p2-solution")), tests = NULL, 
-    options = list(eval = FALSE, echo = TRUE, results = "markup", 
+    "})"), chunk_opts = list(label = "p2-check")), solution = structure(c("#librerias", 
+    "library(tseries) # libreria para la prueba de  Dickey y Fuller ", 
+    "", "# cargar la data", "S2=read.table(\"./data/S2.txt\") ", 
+    "", "# Crear y graficar  la serie ¿Es estacionaria?", "Serie=ts(S2)", 
+    "plot(Serie) # Sí parece ser estacionaria", "", "# Prueba formal de Dickey y Fuller ", 
+    "tseries::adf.test(Serie) # es estacionaria", "", "# graficando la ACF y PACF", 
+    "acf(S2)", "pacf(S2)", "", "# El ACF teórico se corta con el rezago 1, mientras que el PACF se reduce para k=1 ", 
+    "", "# Modelo ajustado MA(1)", "", "Modelo=arima(Serie, c(0,0,1), method=\"ML\")", 
+    "Modelo", ""), chunk_opts = list(label = "p2-solution")), 
+    tests = NULL, options = list(eval = FALSE, echo = TRUE, results = "markup", 
         tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
         comment = NA, highlight = FALSE, size = "normalsize", 
         background = "#F7F7F7", strip.white = TRUE, cache = 0, 
-        cache.path = "DescriptivaST_cache/html/", cache.vars = NULL, 
+        cache.path = "InferenciaST_cache/html/", cache.vars = NULL, 
         cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
         cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
-        fig.align = "default", fig.path = "DescriptivaST_files/figure-html/", 
+        fig.align = "default", fig.path = "InferenciaST_files/figure-html/", 
         dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
         fig.width = 6.5, fig.height = 4, fig.env = "figure", 
         fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
@@ -1040,8 +1074,8 @@ learnr:::store_exercise_cache(structure(list(label = "p2", global_setup = struct
         max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
         exercise.error.check.code = "gradethis_error_checker()", 
         exercise.warn_invisible = FALSE, label = "p2", exercise = TRUE, 
-        exercise.lines = 8, code = "", out.width.px = 624, out.height.px = 384, 
-        params.src = "p2, exercise=TRUE, exercise.lines = 8", 
+        exercise.lines = 20, code = "", out.width.px = 624, out.height.px = 384, 
+        params.src = "p2, exercise=TRUE, exercise.lines = 20", 
         fig.num = 0L, exercise.df_print = "paged"), engine = "r", 
     version = "4"), class = c("r", "tutorial_exercise")))
 </script>
@@ -1067,22 +1101,32 @@ learnr:::store_exercise_cache(structure(list(label = "p3", global_setup = struct
 "        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
 ), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
     chunks = list(list(label = "p3", code = "", opts = list(label = "\"p3\"", 
-        exercise = "TRUE", exercise.lines = "8"), engine = "r")), 
+        exercise = "TRUE", exercise.lines = "20"), engine = "r")), 
     code_check = NULL, error_check = NULL, check = structure(c("grade_this({", 
     "  if(identical(.result, .solution)){", "    pass(\"¡Muy bien!\")", 
     "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
-    "})"), chunk_opts = list(label = "p3-check")), solution = structure(c("Serie=read.table(\"./data/S3.txt\") # Se carga los datos de al serie", 
-    "plot(Serie) # Se grafica la serie", "par(mfrow=c(1,2)) # Permite unir los siguientes gráficos en un solo cuadrante (NO ES NECESARIO)", 
-    "ACF=acf(Serie)", "PACF=pacf(Serie)", "# La serie pertenece a un proceso AR(1)"
-    ), chunk_opts = list(label = "p3-solution")), tests = NULL, 
+    "})"), chunk_opts = list(label = "p3-check")), solution = structure(c("", 
+    "Temperatura=read.table(\"./data/Temperatura.txt\") ", "", 
+    "Temperatura=ts(Temperatura)", "", "# gŕafica de la serie", 
+    "plot(Temperatura)", "tseries::adf.test(Temperatura) # NO es estacionaria", 
+    "", "# Los datos son claramente no estacionarios, ya que la serie se desplaza hacia arriba y hacia abajo durante largos períodos.", 
+    "", "# Descomposición de la serie", "# Descomposición=decompose(Temperatura)  El error indica que la serie no presenta periodos (estacionalidad = 0)", 
+    "", "# Diferenciación", "library(\"forecast\")", "ndiffs(Temperatura) # Diferenciaciones necesarias para eliminar la tendencia", 
+    "", "Serie_dif=diff(Temperatura,differences=1)", "", "acf(Serie_dif)", 
+    "pacf(Serie_dif)", "", "# Vemos que la muestra ACF se corta después del retraso 2 y la muestra PACF se corta después del retraso 1. Por lo tanto, se pueden proponer tres modelos ARMA para los datos", 
+    "# SE comparan 3 modelos con el criterio de AIC", "", "arimaModel_1=arima(Temperatura, order=c(0,1,2))", 
+    "arimaModel_2=arima(Temperatura, order=c(1,1,0))", "arimaModel_3=arima(Temperatura, order=c(1,1,2))", 
+    "", "AIC(arimaModel_1,arimaModel_2,arimaModel_3) # Se seleciona el modelo con menor AIC", 
+    "", "# Finalmente el modelo es ARIMA(1,1,2) ", "", "Modelo=arima(Temperatura, order=c(1,1,2))", 
+    "Modelo"), chunk_opts = list(label = "p3-solution")), tests = NULL, 
     options = list(eval = FALSE, echo = TRUE, results = "markup", 
         tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
         comment = NA, highlight = FALSE, size = "normalsize", 
         background = "#F7F7F7", strip.white = TRUE, cache = 0, 
-        cache.path = "DescriptivaST_cache/html/", cache.vars = NULL, 
+        cache.path = "InferenciaST_cache/html/", cache.vars = NULL, 
         cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
         cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
-        fig.align = "default", fig.path = "DescriptivaST_files/figure-html/", 
+        fig.align = "default", fig.path = "InferenciaST_files/figure-html/", 
         dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
         fig.width = 6.5, fig.height = 4, fig.env = "figure", 
         fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
@@ -1094,8 +1138,8 @@ learnr:::store_exercise_cache(structure(list(label = "p3", global_setup = struct
         max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
         exercise.error.check.code = "gradethis_error_checker()", 
         exercise.warn_invisible = FALSE, label = "p3", exercise = TRUE, 
-        exercise.lines = 8, code = "", out.width.px = 624, out.height.px = 384, 
-        params.src = "p3, exercise=TRUE, exercise.lines = 8", 
+        exercise.lines = 20, code = "", out.width.px = 624, out.height.px = 384, 
+        params.src = "p3, exercise=TRUE, exercise.lines = 20", 
         fig.num = 0L, exercise.df_print = "paged"), engine = "r", 
     version = "4"), class = c("r", "tutorial_exercise")))
 </script>
@@ -1107,7 +1151,7 @@ learnr:::store_exercise_cache(structure(list(label = "p3", global_setup = struct
 <!--/html_preserve-->
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="execution_dependencies">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64]}},"value":[{"type":"character","attributes":{},"value":["backports","base","bitops","bslib","cachem","checkmate","cli","colorspace","commonmark","compiler","datasets","digest","ellipsis","evaluate","fansi","fastmap","fontawesome","ggplot2","glue","gradethis","graphics","grDevices","grid","gtable","highr","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","learnr","lifecycle","magrittr","markdown","methods","mime","munsell","pillar","pkgconfig","promises","R6","Rcpp","RCurl","rlang","rmarkdown","rprojroot","rstudioapi","sass","scales","shiny","stats","stringi","stringr","tibble","tools","utf8","utils","vctrs","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.4.1","4.3.0","1.0-7","0.4.2","1.0.8","2.2.0","3.6.1","2.1-0","1.9.0","4.3.0","4.3.0","0.6.31","0.3.2","0.20","1.0.4","1.1.1","0.5.1","3.4.2","1.6.2","0.2.12.9002","4.3.0","4.3.0","4.3.0","0.3.3","0.10","0.5.5","1.6.2","1.6.9","0.1.4","1.8.4","1.42","1.3.0","0.11.3.9000","1.0.3","2.0.3","1.6","4.3.0","0.12","0.5.0","1.9.0","2.0.3","1.2.0.1","2.5.1","1.0.10","1.98-1.12","1.1.1","2.21","2.0.3","0.14","0.4.5","1.2.1","1.7.4","4.3.0","1.7.12","1.5.0","3.2.1","4.3.0","1.2.3","4.3.0","0.6.2","2.5.0","0.39","1.8-4","2.3.7"]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79]}},"value":[{"type":"character","attributes":{},"value":["backports","base","bitops","bslib","cachem","checkmate","cli","colorspace","commonmark","compiler","curl","datasets","digest","ellipsis","evaluate","fansi","fastmap","fontawesome","forecast","fracdiff","generics","ggplot2","glue","gradethis","graphics","grDevices","grid","gtable","highr","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","lattice","learnr","lifecycle","lmtest","magrittr","markdown","methods","mime","munsell","nlme","nnet","parallel","pillar","pkgconfig","promises","quadprog","quantmod","R6","Rcpp","RCurl","rlang","rmarkdown","rprojroot","rstudioapi","sass","scales","shiny","stats","tibble","timeDate","tools","tseries","TTR","urca","utf8","utils","vctrs","withr","xfun","xtable","xts","yaml","zoo"]},{"type":"character","attributes":{},"value":["1.4.1","4.3.0","1.0-7","0.4.2","1.0.8","2.2.0","3.6.1","2.1-0","1.9.0","4.3.0","5.0.0","4.3.0","0.6.31","0.3.2","0.20","1.0.4","1.1.1","0.5.1","8.21","1.5-2","0.1.3","3.4.2","1.6.2","0.2.12.9002","4.3.0","4.3.0","4.3.0","0.3.3","0.10","0.5.5","1.6.2","1.6.9","0.1.4","1.8.4","1.42","1.3.0","0.21-8","0.11.3.9000","1.0.3","0.9-40","2.0.3","1.6","4.3.0","0.12","0.5.0","3.1-162","7.3-18","4.3.0","1.9.0","2.0.3","1.2.0.1","1.5-8","0.4.22","2.5.1","1.0.10","1.98-1.12","1.1.1","2.21","2.0.3","0.14","0.4.5","1.2.1","1.7.4","4.3.0","3.2.1","4022.108","4.3.0","0.10-53","0.24.3","1.3-3","1.2.3","4.3.0","0.6.2","2.5.0","0.39","1.8-4","0.13.1","2.3.7","1.8-12"]}]}]}
 </script>
 <!--/html_preserve-->
 </div>
