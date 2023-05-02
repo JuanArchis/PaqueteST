@@ -3,7 +3,8 @@
 <p align="center">
 <a name="top" href="#"> <img src="https://media2.giphy.com/media/rGlAZysKBcjRCkAX7S/giphy.gif" alt="mf-dots" height="40%" width="60%"/> </a>
 
-# 
+  
+# Versión 0.0.1 (Tutorial descriptivo) 
 
 ### :computer: **Introducción:**
 
@@ -46,8 +47,15 @@ El paquete fue construido utilizando la versión 4.2.3 de R, si su versión es a
 install.packages("installr", dependencies = TRUE);library(installr)
 updateR()
 ```
+ 
+# Versión 0.0.2 (Tutorial inferencial) 
 
+Para ejecutar el tutorial referente a la parte inferencia sólo ejecute:
+  
+```
+learnr::run_tutorial(name = "InferenciaST", package = "PaqueteST")
+``` 
 
-
+  
 #
-En la versión 0.0.1 (actual) sólo se encuentra disponible el tutorial referente al análisis descriptivo de series temporales.
+En la versión 0.0.2 (actual)  se encuentra disponible el tutorial referente al análisis descriptivo e inferencial de series temporales.
