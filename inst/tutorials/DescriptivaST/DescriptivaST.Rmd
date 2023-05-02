@@ -526,6 +526,7 @@ read.table("./data/..")
 
 ```{r p3-solution}
 Serie=read.table("./data/S3.txt") # Se carga los datos de al serie
+Serie=ts(Serie)
 plot(Serie) # Se grafica la serie
 par(mfrow=c(1,2)) # Permite unir los siguientes gráficos en un solo cuadrante (NO ES NECESARIO)
 ACF=acf(Serie)
