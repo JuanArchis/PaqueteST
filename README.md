@@ -14,12 +14,10 @@ En el presente repositorio encontrará la versión 0.0.1 del paqueteST, el cual 
 
 ### :warning: **Dependencias:**
 
-Antes de instalar y cargar es tutorial es menester que instale los siguientes paquetes: gradethis, devtools y rlang. Esto lo puede hacer ejecutando el código:
+Antes de instalar y cargar es tutorial es menester instalar las dependencias necesarias para ello. El paquete cuenta con una función que realizará esto para usted, lo puede hacer ejecutando el código:
 
 ```
-install.packages("devtools");library(devtools)
-devtools::install_github("rstudio/gradethis")
-install.packages("rlang")
+Librerias()
 ```
 
 #
