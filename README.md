@@ -12,18 +12,8 @@ En el presente repositorio encontrará la versión 0.0.1 del paqueteST, el cual 
 
 #
 
-### :warning: **Dependencias:**
-
-Antes de instalar y cargar es tutorial es menester instalar las dependencias necesarias para ello. El paquete cuenta con una función que realizará esto para usted, lo puede hacer ejecutando el código:
-
-```
-Librerias()
-```
-
-#
 
 ### :wrench: **Instrucciones de instalación:**
-
 
 
 **1.** Instale el paquete alojado en el presente repositorio ejecutando en R:
@@ -34,7 +24,15 @@ devtools::install_github("JuanArchis/PaqueteST")
 Al momento de instalar el paquete, R le pedirá indicar las versiones de los paquetes a instalar, por favor digite "1" para actualizar e instalar todos las librerías necesarias en el tutorial.
 
 
-**2.** Finalmente ejecute el tutorial en R con el siguiente comando:
+**2.** :warning: **Dependencias:**
+
+Antes de cargar el tutorial es menester instalar las dependencias necesarias para ello. El paquete cuenta con una función que realizará esto para usted, lo puede hacer ejecutando el código:
+
+```
+Librerias()
+```  
+  
+**3.** Finalmente ejecute el tutorial en R con el siguiente comando:
 
 ```
 learnr::run_tutorial(name = "DescriptivaST", package = "PaqueteST")
