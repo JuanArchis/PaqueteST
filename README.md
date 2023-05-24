@@ -51,8 +51,14 @@ Para ejecutar el tutorial referente a la parte inferencia sólo ejecute:
   
 ```
 learnr::run_tutorial(name = "InferenciaST", package = "PaqueteST")
+  
 ``` 
+# Versión 0.0.3 (Tutorial pronóstico) 
 
+Para ejecutar el tutorial referente a la parte de pronóstico sólo ejecute:
+  
+```
+learnr::run_tutorial(name = "Pron", package = "PaqueteST")
+``` 
   
 #
-En la versión 0.0.2 (actual)  se encuentra disponible el tutorial referente al análisis descriptivo e inferencial de series temporales.
