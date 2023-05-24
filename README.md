@@ -58,7 +58,7 @@ learnr::run_tutorial(name = "InferenciaST", package = "PaqueteST")
 Para ejecutar el tutorial referente a la parte de pronóstico sólo ejecute:
   
 ```
-learnr::run_tutorial(name = "Pron", package = "PaqueteST")
+learnr::run_tutorial(name = "PronósticoST", package = "PaqueteST")
 ``` 
-  
+
 #
