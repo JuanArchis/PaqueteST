@@ -20,7 +20,7 @@ En el presente repositorio encontrará la versión 0.0.1 del paqueteST, el cual 
 
 ```
 if (!require("devtools")) install.packages("devtools")
-devtools::install_github("JuanArchis/PaqueteST")
+devtools::install_github("JuanArchis/PaqueteST");library("PaqueteST")
 ```
 Al momento de instalar el paquete, R le pedirá indicar las versiones de los paquetes a instalar, por favor digite "1" para actualizar e instalar todos las librerías necesarias en el tutorial.
 
