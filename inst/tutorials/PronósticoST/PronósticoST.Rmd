@@ -1,0 +1,665 @@
+---
+title: "**Series temporales**"
+author: Departamento de Ciencias Naturales y Matemáticas
+output: 
+  learnr::tutorial:
+    css: css/learnr_metadocencia.css
+    progressive: true # los encabezados de tercer nivel (###) son revelados progresivamente
+    allow_skip: true # permite saltearse los ejercicios. 
+    language:
+      es: tutorial_es.json
+description: "Tutorial interactivo conceptos sobre la validación y los pronósticos en series temporales" # Esta descripción se ve en el panel Tutorial de RStudio 
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	comment = NA
+)
+library(knitr)
+library(learnr)
+library(ggplot2)
+library(RCurl)
+library(gradethis)
+knitr::opts_chunk$set(exercise.warn_invisible = FALSE)
+# colores
+c1="#FF7F00" # NARANJA COLOR PRINCIPAL
+c2="#034a94" # AZUL FUERTE COLOR SECUNDARIO  
+c3="#0eb0c6" # AZUL CLARO COLOR TERCEARIO  
+c4="#686868" # GRIS COLOR TEXTO 
+#library(PerformanceAnalytics)
+#library(patchwork)
+#-----------------------------------------------
+Theme1= theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+#-------------------------------------------------------------------------
+```
+<style>body {text-align: justify}</style>
+
+
+## **PRESENTACIÓN**
+
+```{r, echo=FALSE, out.width="100%", fig.align = "center"}
+knitr::include_graphics("images/banner_presentacion.png")
+```
+
+El presente tutorial abordará la parte de validación y pronósticos de las series temporales con R; este está estructurado en dos etapas: Introducción o recordatorio teórico ejercicios prácticos usando R. 
+</br>
+
+### **Introducción**
+
+Como se ha visto en los anteriores tutoriales, el análisis de series temporales se compone principalmente de 4 etapas: Análisis exploratorio, ajuste del modelo y pronósticos. En la parte del ajuste del modelo, es menester identificar si el modelo ajustado es adecuado antes de realizar los pronósticos en este, a dicha etapa se le conoce como validación. La validación de un modelo en series temporales va a estar dada por:
+
+- Análisis de los residuos 
+
+- Significancia de los coeficientes
+
+- Condiciones de estacionariedad e invertibilidad
+
+
+
+#### **Análisis de los residuos y datos atípicos**
+
+Como se entiende comúnmente, una de las suposiciones de los modelos univariantes es que el componente de error del modelo es aleatorio. Por esta razón, los residuos obtenidos después de estimar el modelo deben comportarse de manera completamente aleatoria, siguiendo una distribución normal. De lo contrario, si contienen información importante para la predicción, estaríamos ignorando dicha información. Suponga cuenta con la siguiente serie temporal:
+
+
+```{r include=FALSE,out.width="100%", fig.align = "center"}
+S3=read.table("./data/S3.txt");Serie=ts(S3)
+plot(Serie, cex.main=1, main="Gráfico de la serie S3",xlab="Tiempo",ylab="Datos")
+```
+
+Después de analizar los gráficos de correlaciones se concluye que un modelo pertinente es el AR(1), observe los gráficos:
+
+
+```{r echo=FALSE,fig.width=9}
+par(mfrow=c(1,2))
+ACF=acf(Serie,xlab="Rezago", main="ACF serie S3")
+PACF=pacf(Serie, xlab="Rezago", main="PACF serie S3")
+```
+
+
+Por los tanto el ajuste del modelo es:
+
+```{r}
+ModeloAR=arima(Serie, c(1,0,0), method="CSS-ML",include.mean=TRUE)
+ModeloAR
+```
+
+Como se dijo anteriormente, el diagnóstico del modelo se realiza sobre los residuos del modelo, es decir, use la función $residuals(Modelo)$:
+
+```{r}
+Residuos=residuals(ModeloAR) # Se extraen los residuos del modelo AR(1) ajustado
+```
+
+El diagnóstico de normalidad generalmente se realiza con base en dos criterios, el gráfico (QQPlot) y la prueba formal de hipótesis (Shapiro-Wilk), en R esto es:
+
+```{r,out.width="100%", fig.align = "center"}
+# Gráfico QQPlot
+qqnorm(Residuos,main="QQplot de los residuos del modelo") # Crea el gráfico
+qqline(Residuos, col="red")# Traza la linea
+
+# Prueba formal
+shapiro.test(Residuos) # Prueba de Shapiro-Wilk
+```
+
+
+El QQplot anterior nos está indicando que los cuantiles de los residuos del modelo se ajustan bien a los cuantiles teóricos normales, lo que nos hace pensar a priori que, si se realiza un test de normalidad formal en los residuos, este rechazará la NO normalidad. Realizando la prueba formal de Shapiro-Wilk a los residuos tenemos: con un valor P alto, esta nos indica que tenemos suficiente evidencia estadística para NO rechazar la hipótesis de normalidad en los residuos del modelo.
+
+Para obtener un panorama general del diagnostico de los residuos del modelo en función de su correlación se debe ejecutar la función $tsdiag(Modelo)$ en R. La función permite vizualizar tres gráficos:
+
+**1.** Residuos estandarizados vs el tiempo:  Permite identificar la tendencia de los residuos del modelo, si estos no tienen una tendencia clara nos indica que los residuos se distribuyen de manera aleatoria y no muestran un patrón sistemático o una dirección específica a medida que pasa el tiempo (sería lo adecuado).
+
+**2.** El segundo gráfico es la ACF de los residuos: Ya explorado en los primeros dos tutoriales.
+
+**3.** Rezago vs valores P de la prueba de Ljung-Box: Permite evaluar la presencia de autocorrelación en los residuos de un modelo. La prueba de Ljung-Box es una prueba estadística que busca determinar si hay autocorrelación en los residuos en diferentes rezagos o retardos. EL ǵrafico muestra la prueba para los primeros diez rezagos. La linea por defecto que traza el gráfico es una significancia del 5%. Si los puntos están por arriba de la linea, indica que los errores no tiene autocorrealción.
+
+Siguiendo el anterior ejemplo, tenemos:
+
+
+```{r,out.width="100%", fig.align = "center",fig.height=7}
+tsdiag(ModeloAR)
+```
+
+Se concluye dado los tres gráficos, que las condiciones necesarias se cumplen. En caso de contar con NO normalidad del modelo, esta puede deberse a valores atípicos, pues si de revisarse el gráfico 1 (Residuos estandarizados vs el tiempo) se evidencia que hay residuos que se alejan significativamente de cero (se asume que los residuos son normales con media 0 y varianza 1),   estaría indicando que los residuos que están muy alejados de 0 posiblemente pertenecen a observaciones atípicas. En este caso, es menester solucionar dichas observaciones atípicas, ya sea  reestructurando el modelo con variables explicativas para no considerar la influencia de las observaciones atípicas y demás metodologías. Si no se comple la normalidad no se aconseja seguir con la interpretación de significatividad del modelo.
+
+#### **Significatividad de los coeficientes**
+
+Una vez el modelo ha pasado el análisis de normalidad en sus errores, se debe ver la significancia de cada coeficiente estimado. La función $arima()$ en R por defecto no ofrece la prueba de hipótesis para esto. Puede dejecutarla manualmente o en su defecto, usar la función $coeftest()$ del paquete $lmtest$.
+
+```{r}
+library("lmtest")
+coeftest(ModeloAR)
+```
+
+Como se evidencia, el parámetro AR(1) es significativo (la principal utilidad del análisis de significancia es cuando se cuenta con una mezcla de procesos AR(p) y M(q)).
+
+#### **Pronóstico** 
+
+Una vez que se ha elegido el modelo más adecuado para los datos de la serie temporal, los parámetros del modelo ARIMA se pueden utilizar como una herramienta predictiva para pronosticar valores futuros de la serie. Notar que el  valor de "d" tiene un efecto en los intervalos de predicción, ya que estos aumentan en tamaño a medida que "d" se incrementa. Cuando "d" es igual a cero, todos los intervalos de predicción serán esencialmente iguales, ya que la desviación estándar del pronóstico a largo plazo se aproxima a la desviación estándar de los datos históricos. En R los pronósticos son:
+
+- Para conocer los valores pronósticados use: $forecast(Modelo)$ del paquete $forecast$
+
+- Para graficar los valores pronósticados use: $autoplot(forecast(Modelo))$ del paquete $forecast$
+
+Por ejemplo:
+
+```{r}
+library("forecast")
+kable(forecast(ModeloAR))
+```
+
+
+
+```{r,fig.align = "center"}
+autoplot(forecast(ModeloAR))
+```
+
+También puede realizar los $k$ primeros pronósticos con la función "sarima.for" en R.
+
+#### Revisión de observaciones atípicas y reestructuración del modelo
+
+En este anexo se supone se ha visto teóricamente la creación de las variables explicativas para así crear la matriz de diseño. En tal caso, la metodología propone ara mejorar la normalidad en los residuos del modelo  reestructurar el modelo con base en variables dicotómicas que considerarán una desviasión
+del ajuste del modelo con respecto a la media para los tiempos de las observaciones atípicas. Es decir, sea por ejemplo el modelo AR(1):
+
+$$
+Z_t=\beta x_t+ \frac{\theta(B)}{\phi(B)} a_t
+$$
+
+Donde:
+
+- $x_i$ es una variable dicotómica, donde es igual a 0 para los tiempos no atípicos y 1 para los tiempos atípicos.
+- $\beta$ es el coeficiente asociado a xi.
+
+Es decir, el proceso queda eescrito en dos formas:
+
+
+$$
+Z_t=\left\{\begin{matrix}
+\phi(B)^{-1} a_t;\forall\neq t  \text{ considerado atípico }
+\\ 
+\beta_i+\phi(B)^{-1} a_t;\forall = t  \text{ considerado atípico }
+\end{matrix}\right.
+$$
+
+Donde $\phi(B) = (1 − \phi B)$ y $Z_t$ será $\phi(B)a_t$ (proceso AR(1)) para las observaciones diferentes de las atípicas; para las observaciones atípicas $Z_t$ será $\beta_i + \phi(B)a_t$, es decir, un proceso AR(1) más una desviación del ajuste del modelo respecto a su media.
+
+##### Ejemplo
+
+Sea la siguiente figura de una serie:
+
+```{r,out.width="100%", fig.align = "center",fig.height=7}
+Ejemplo=read.table("./data/Ejemplo.txt");Serie1=ts(Ejemplo)
+Modelo=arima(Ejemplo,c(1,0,0), method="CSS-ML",include.mean=TRUE)
+Residuos=Modelo$residuals
+tsdiag(Modelo)
+```
+
+
+Si se realiza la prueba Shapiro para los residuos se tiene:
+
+```{r}
+shapiro.test(Modelo$residuals)
+```
+
+ES decir, se rechaza la hipótesis de normalidad para los errores (5% de significancia).Note que en el gráfico de residuos estandarizados del modelo, se evidencia que hay residuos muy alejados de 0, lo que nos indica posibles puntos atípicos influyentes; dado lo anterior, se extraen las observaciones que están mas de 2.5 desviaciones estandar alejadas de cero, estas observaciones son:
+
+
+```{r}
+Residuos_Est=Residuos/(Modelo$sigma2)^0.5 # Se crean los residuos estandarizados
+índice=(abs(Residuos_Est)>2.5)
+Tabla_atipicos=cbind(1:1000,Residuos_Est, índice)## 1 para abs(Residuos_Est)>2.5 y 0 si no
+ValoresATI=Tabla_atipicos[índice==1,] ## Selecciona los valores con abs(Residuos_Est)>2.5
+kable(ValoresATI)
+```
+
+
+Como son 9 observaciones atípicas, se crean las variables explicativas en R y así crear la matriz de diseño (matriz $X_{1000x9}$) que multiplicará al vector de coeficientes $\beta_{9x1}$. Note que en la matriz de diseño hay $1000$ filas porque la serie es este tamaño. En R esto es:
+
+```{r}
+#----- generación de las variables indicadoras
+ind80=rep(0, times=1000);ind80[80]=1;ind120=rep(0, times=1000);ind120[120]=1;
+ind121=rep(0, times=1000);ind121[121]=1;ind179=rep(0, times=1000);ind179[179]=1;
+ind531=rep(0, times=1000);ind531[531]=1;ind559=rep(0, times=1000);ind559[559]=1;
+ind560=rep(0, times=1000);ind560[560]=1;ind691=rep(0, times=1000);ind691[691]=1;
+ind966=rep(0, times=1000);ind966[966]=1
+
+#-----Matriz de diseño
+atipicos=as.matrix(cbind(ind80,ind120,ind121,ind179,ind531,ind559,ind560,ind691,ind966))
+```
+
+
+Finalmente, ajustar un modelo AR(1) con variables explicativas para no considerar la influencia de las observaciones atípicas en R se escribe:
+
+```{r}
+ModeloAR_Atip=arima(Serie1, xreg=atipicos, order = c(1, 0, 0),method = c("CSS-ML"))
+```
+
+Donde el argumento $xreg$ representa la matriz de valores que se consideran influyentes.
+
+
+Ahora, note que la NO normalidad ha sido corregida, al parecer los nieve datos eran influyentes:
+
+```{r}
+shapiro.test(ModeloAR_Atip$residuals)
+```
+
+
+La metodología anterior es aplicable a cualquier modelo $ARIMA(p,d,q)$.
+
+Ahora, es momento de pasar a los problemas.
+
+## **PROBLEMAS**
+
+
+### **Problema 1**
+
+Suponga usted cuenta con datos medidos en el tiempo sobre el voltaje de determinado sistema eléctrico. Los datos los encuentra en un archivo txt llamado “Voltaje”. 
+
+### **1. Realice:**
+
+- Importe los datos, ajuste y grafique  la serie temporal.
+- ¿La serie es estacionaria?
+- Con la PACF y ACF ajuste un modelo que considere pertinente para modelar la serie
+
+
+
+```{r p1, exercise=TRUE, exercise.lines = 20}
+
+
+
+```
+
+
+```{r p1-hint-1}
+#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+Serie=read.table("./data/S1.txt") 
+
+tseries::adf.test(ts) # prueba formal
+```
+
+
+```{r p1-solution}
+#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+Voltaje=read.table("./data/Voltaje.txt") 
+
+# Crear y graficar  la serie ¿Es estacionaria?
+Serie=ts(Voltaje)
+plot(Serie) # Sí parece ser estacionaria
+
+# Prueba formal de Dickey y Fuller 
+tseries::adf.test(Serie) # es estacionaria
+
+# graficando la ACF y PACF
+acf(Serie)
+pacf(Serie)
+
+# Modelo 
+Modelo=arima(Serie, c(1,0,0), method="CSS-ML",include.mean=TRUE)
+
+```
+
+```{r p1-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+
+### **2. ¿Para el modelo ajustado anteriormente se cumplen los supuestos? Realice los gráficos y las pruebas necesarias en R.**
+
+
+```{r p2, exercise=TRUE, exercise.lines = 20}
+
+# cargar la data
+Voltaje=read.table("./data/Voltaje.txt") 
+
+# Crear y graficar  la serie , ajustar modelo
+Serie=ts(Voltaje)
+Modelo=arima(Serie, c(1,0,0), method="CSS-ML",include.mean=TRUE)
+
+# Siga con el código debajo:
+```
+
+
+```{r p2-hint-1}
+#- Recuerde que la validación se realiza sobre los residuos: resituals(Nombre_Modelo)
+#- tsdiag() para realizar los gráficos vistos en la introducción sobre validación
+# - shapiro.test() para realizar la prueba de normalidad
+```
+
+
+```{r p2-solution}
+
+# Diagnóstico sobre los errores
+Residuos=residuals(Modelo)
+
+# Gŕaficos de diagnóstico
+tsdiag(Modelo)
+
+#- EN el primero parecen indicar datos atípicos, además no indica tendencia.
+#- ACF indica un AR(1).
+#- La prueba no indica problemas de correlación en los errores.
+
+# Normaliad en los errores
+
+shapiro.test(Residuos) # No hay normalidad
+
+```
+
+```{r p2-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+
+
+
+
+### **3. Reestructure el modelo con variables explicativas para manejar los datos atípicos, ¿Se soluciona algún incumplimiento de un supuesto?  Finalmente Imprima los pronósticos sobre el Voltaje en el sistema, además grafíquelos.  **
+
+
+```{r p3, exercise=TRUE, exercise.lines = 20}
+
+# cargar la data
+Voltaje=read.table("./data/Voltaje.txt") 
+
+# Crear y graficar  la serie , ajustar modelo
+Serie=ts(Voltaje)
+Modelo=arima(Serie, c(1,0,0), method="CSS-ML",include.mean=TRUE)
+Residuos=residuals(Modelo) # residuos
+
+# Siga con el código debajo:
+
+```
+
+
+```{r p3-hint-1}
+# Recuerde debe identificar observaciones atípicas: Por ejemplo, en el primer gráfico del apartado anterior, puede ver que la mayoría de los residuos oscila entre -2.5 y 2.5
+
+# Para extraerlos cree un índice, por ejemplo:
+
+Ind=(abs(RESIDUOS)>2.5)
+
+# Luego creee la tabla indicadora
+
+Tabla_atipicos=cbind(1:n ,RESIDUOS, Ind) # 1 para abs(Residuos_Est)>2.5 y 0 si no
+
+# Por último no olvide selecinoar sólo los valroes con abs(Residuos_Est)>2.5, es decir, iguales a 1.
+
+
+```
+
+
+```{r p3-hint-2}
+
+# Una vez conoce los índices de las variables atípicas, genere la matriz de variables indicadoras: por ejemplo
+
+ind1=rep(0, times=n);ind80[indice_encontrado]=1
+
+# Finalmente cree la matrix de diseño:
+
+atípicos=as.matrix(ind1,ind2,ind3)
+
+```
+
+
+```{r p3-solution}
+
+# Crear rediuos estandarizados
+
+Residuos_Est=Residuos/(Modelo$sigma^0.5)
+
+# Conocer los valores atípicos
+índice=(abs(Residuos_Est)>2.5)
+Tabla_atipicos=cbind(1:1000,Residuos_Est, índice)## 1 para abs(Residuos_Est)>2.5 y 0 si no
+ValoresATI=Tabla_atipicos[índice==1,] ## Selecciona los valores con abs(Residuos_Est)>2.5
+ValoresATI
+
+# crear la matrix de diseño
+ind80=rep(0, times=1000);ind80[80]=1;ind120=rep(0, times=1000);ind120[120]=1;
+ind121=rep(0, times=1000);ind121[121]=1;ind179=rep(0, times=1000);ind179[179]=1;
+ind531=rep(0, times=1000);ind531[531]=1;ind559=rep(0, times=1000);ind559[559]=1;
+ind560=rep(0, times=1000);ind560[560]=1;ind691=rep(0, times=1000);ind691[691]=1;
+ind966=rep(0, times=1000);ind966[966]=1
+
+atipicos=as.matrix(cbind(ind80,ind120,ind121,ind179,ind531,ind559,ind560,ind691,ind966))
+
+
+# ajustar el modelo con variables explicativas
+Modelo_Atip=arima(Serie, xreg=atipicos, order = c(1, 0, 0),method = c("CSS-ML"))
+
+
+# Pronósticos
+library("forecast")
+kable(forecast(Modelo))
+
+# gráfico de pronósticos
+autoplot(forecast(Modelo))
+
+```
+
+```{r p3-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+
+### **Problema 2**
+
+La base de datos "co2" es una colección de mediciones históricas de dióxido de carbono (CO2) en la atmósfera. Estos datos representan una serie temporal que abarca un período de varios años y han sido recopilados a partir de diversas estaciones de monitoreo alrededor del mundo. Los datos están en formato $xlsx$. La base cuenta con tres variables, a saber: CO2 (CO2), Año (Year) y mes (Month). Realice:
+
+### **1.Importe los datos, cree la serie para la variable CO2 de tal forma que inicie 1959 y su frecuencia sea mensual. ¿es estacionaria? **
+
+
+```{r p4, exercise=TRUE, exercise.lines = 10}
+
+
+
+
+```
+
+
+```{r p4-hint-1}
+
+# Use: read.xlsx("./data/...")
+
+```
+
+
+
+```{r p4-solution}
+
+co2=read.xlsx("./data/co2.xlsx") 
+Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)
+plot(Serie)
+# No es estacionaria
+```
+
+```{r p4-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+
+### **2. Descomponga la serie y defina la cantidad de diferenciaciones regulares y estacionales pertinentes. ¡La serie diferenciada es estacionaria?**
+
+
+```{r p5, exercise=TRUE, exercise.lines = 10}
+
+co2=read.xlsx("./data/co2.xlsx") 
+Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)
+
+# Siga con el código debajo:
+```
+
+
+```{r p5-hint-1}
+
+# Use: decompose() para descomponer la serie, además use las funciones: ndiffs() y nsdiffs()
+
+```
+
+
+```{r p5-solution}
+# Descomposición
+Descomposición=decompose(Serie)
+plot(Descomposición)
+
+ndiffs(Serie) # se requiere una diferencia para eliminar la tendencia
+
+# Componentes estacional
+boxplot(Serie~cycle(Serie)) # compara la serie temporal con la componente cíclica
+
+# Como se puede ver, el componentes estacionar a diferenciar es igual a 12. Finalmente la serie diferenciada es:
+
+Serie_dif=diff(Serie, lag = 12)
+
+plot(Serie_dif) # Como puede ver, se ha eliminado tanto la componente de tendencia y la estacional,
+
+library(tseries) # se realiza la prueba de Dickey-Fulle
+adf.test(Serie_dif) # La serie es estacinaria
+```
+
+```{r p5-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+### **3. Grafique la PACF y ACF, ajuste tres modelos que crea pertinente para la serie (no olvide indicar las diferenciaciones) .Comparelos y selecione uno de ellos**
+
+
+```{r p6, exercise=TRUE, exercise.lines = 10}
+
+co2=read.xlsx("./data/co2.xlsx") 
+Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)
+Serie_dif=diff(Serie, lag = 12)
+
+# Siga con el código debajo:
+
+
+```
+
+
+```{r p6-hint-1}
+
+# Use: Modelo1=arima(Serie, order=c(..), seasonal=list(....),period=..))
+
+# para comprar use AIC(Modelos1, ...)
+
+```
+
+
+
+```{r p6-solution}
+
+# ACF y PACF
+
+acf(Serie_dif);pacf(Serie_dif)
+
+# Ajuste de tres modelos
+
+Modelo1=arima(Serie, order=c(0,1,2), seasonal=list(order=c(0,1,1),period=12))
+Modelo2=arima(Serie, order=c(1,1,2), seasonal=list(order=c(0,1,1),period=12))
+Modelo3=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))
+
+
+AIC(Modelo1,Modelo2,Modelo3) # El mejor modelo parece ser el 3, ARIMA(0,1,1)(0,1,1)
+```
+
+```{r p6-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+
+### **4. Ralice el diagnóstico del modelo selecionado y el gráfico de pronósticos**
+
+
+```{r p7, exercise=TRUE, exercise.lines = 10}
+
+co2=read.xlsx("./data/co2.xlsx") 
+Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)
+Modelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))
+
+# Siga con el código debajo:
+
+
+```
+
+
+```{r p7-hint-1}
+
+# Usea tsdiag() y shapiro.test()
+
+```
+
+
+
+```{r p7-solution}
+
+Modelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))
+
+
+
+# Diagnóstico
+tsdiag(Modelo)
+
+# Normalidad
+Residuos=residuals(Modelo)
+shapiro.test(Residuos)
+
+
+# Todo parece estar correcto
+
+# pronósticos:
+autoplot(forecast(Modelo))
+```
+
+```{r p7-check}
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
+```
+
+
+
+
+

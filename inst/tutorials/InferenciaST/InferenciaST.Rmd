@@ -161,7 +161,7 @@ knitr::include_graphics("images/Figura2.png")
 La caracterizacioń gráfica de las funciones de autocorrelación de los modelos $ARMA(p,q)$ es un poco más compleja, a continuación se muestran diferentes gráficas de este:
 
 
-```{r, echo=FALSE, , out.width="100%", fig.align = "center",fig.cap="Figura 4:  Ejemplos de funciones de autocorrelación de un proceso ARMA(1,1)"}
+```{r, echo=FALSE, out.width="100%", fig.align = "center",fig.cap="Figura 4:  Ejemplos de funciones de autocorrelación de un proceso ARMA(1,1)"}
 knitr::include_graphics("images/Figura3.png")  
 ```
 
@@ -291,7 +291,7 @@ Ahora bien, finalizado la presentación del documento, es momento de pasar al cu
 Sea la siguiente figura con gráfico de tiempo y gráficos ACF y PACF para los datos ajustados estacionalmente diferenciados en primer orden:
 
 
-```{r, echo=FALSE, , out.width="100%", fig.align = "center",fig.cap="Figura 1: ráfico de tiempo y gráficos ACF y PACF para los datos de equipos eléctricos ajustados estacionalmente diferenciados. "}
+```{r, echo=FALSE,  out.width="100%", fig.align = "center",fig.cap="Figura 1: ráfico de tiempo y gráficos ACF y PACF para los datos de equipos eléctricos ajustados estacionalmente diferenciados. "}
 knitr::include_graphics("images/Imagen4.png")  
 ```
 
@@ -496,7 +496,12 @@ Modelo
 ```
 
 ```{r p1-check}
-
+grade_this({
+  if(identical(.result, .solution)){
+    pass("¡Muy bien!")
+  }
+  fail("Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada")
+})
 
 ```
 

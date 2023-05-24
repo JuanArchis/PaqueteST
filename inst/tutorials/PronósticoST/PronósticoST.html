@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Departamento de Ciencias Naturales y Matemáticas" />
+
+
+<meta name="progressive" content="true" />
+<meta name="allow-skip" content="true" />
+<meta name="learnr-version-prerender" content="0.11.3.9000" />
+
+<title>Series temporales</title>
+
+<!-- header-includes START -->
+<!-- HEAD_CONTENT -->
+<!-- header-includes END -->
+<!-- HEAD_CONTENT -->
+
+<!-- highlightjs -->
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+<!-- taken from https://github.com/rstudio/rmarkdown/blob/de8a9c38618903627ca509f5401d50a0876079f7/inst/rmd/h/default.html#L293-L343 -->
+<!-- tabsets -->
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+<!-- end tabsets -->
+
+<link rel="stylesheet" href="css/learnr_metadocencia.css" type="text/css" />
+
+</head>
+
+<body>
+<a class='sr-only sr-only-focusable visually-hidden-focusable' href='#learnr-tutorial-content'>Skip to Tutorial Content</a>
+
+
+
+<div class="pageContent band">
+<main class="bandContent page">
+
+<article class="topics" id="learnr-tutorial-content">
+
+<style>body {text-align: justify}</style>
+<div id="section-presentación" class="section level2">
+<h2><strong>PRESENTACIÓN</strong></h2>
+<p><img src="images/banner_presentacion.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>El presente tutorial abordará la parte de validación y pronósticos de
+las series temporales con R; este está estructurado en dos etapas:
+Introducción o recordatorio teórico ejercicios prácticos usando R.
+</br></p>
+<div id="section-introducción" class="section level3">
+<h3><strong>Introducción</strong></h3>
+<p>Como se ha visto en los anteriores tutoriales, el análisis de series
+temporales se compone principalmente de 4 etapas: Análisis exploratorio,
+ajuste del modelo y pronósticos. En la parte del ajuste del modelo, es
+menester identificar si el modelo ajustado es adecuado antes de realizar
+los pronósticos en este, a dicha etapa se le conoce como validación. La
+validación de un modelo en series temporales va a estar dada por:</p>
+<ul>
+<li><p>Análisis de los residuos</p></li>
+<li><p>Significancia de los coeficientes</p></li>
+<li><p>Condiciones de estacionariedad e invertibilidad</p></li>
+</ul>
+<div id="section-análisis-de-los-residuos-y-datos-atípicos"
+class="section level4">
+<h4><strong>Análisis de los residuos y datos atípicos</strong></h4>
+<p>Como se entiende comúnmente, una de las suposiciones de los modelos
+univariantes es que el componente de error del modelo es aleatorio. Por
+esta razón, los residuos obtenidos después de estimar el modelo deben
+comportarse de manera completamente aleatoria, siguiendo una
+distribución normal. De lo contrario, si contienen información
+importante para la predicción, estaríamos ignorando dicha información.
+Suponga cuenta con la siguiente serie temporal:</p>
+<p>Después de analizar los gráficos de correlaciones se concluye que un
+modelo pertinente es el AR(1), observe los gráficos:</p>
+<p><img src="Pron%C3%B3sticoST_files/figure-html/unnamed-chunk-3-1.png" width="864" /></p>
+<p>Por los tanto el ajuste del modelo es:</p>
+<pre class="r"><code>ModeloAR=arima(Serie, c(1,0,0), method=&quot;CSS-ML&quot;,include.mean=TRUE)
+ModeloAR</code></pre>
+<pre><code>
+Call:
+arima(x = Serie, order = c(1, 0, 0), include.mean = TRUE, method = &quot;CSS-ML&quot;)
+
+Coefficients:
+          ar1  intercept
+      -0.6937   235.4832
+s.e.   0.0228     1.5567
+
+sigma^2 estimated as 6952:  log likelihood = -5848.54,  aic = 11703.07</code></pre>
+<p>Como se dijo anteriormente, el diagnóstico del modelo se realiza
+sobre los residuos del modelo, es decir, use la función <span
+class="math inline">\(residuals(Modelo)\)</span>:</p>
+<pre class="r"><code>Residuos=residuals(ModeloAR) # Se extraen los residuos del modelo AR(1) ajustado</code></pre>
+<p>El diagnóstico de normalidad generalmente se realiza con base en dos
+criterios, el gráfico (QQPlot) y la prueba formal de hipótesis
+(Shapiro-Wilk), en R esto es:</p>
+<pre class="r"><code># Gráfico QQPlot
+qqnorm(Residuos,main=&quot;QQplot de los residuos del modelo&quot;) # Crea el gráfico
+qqline(Residuos, col=&quot;red&quot;)# Traza la linea</code></pre>
+<p><img src="Pron%C3%B3sticoST_files/figure-html/unnamed-chunk-6-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Prueba formal
+shapiro.test(Residuos) # Prueba de Shapiro-Wilk</code></pre>
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  Residuos
+W = 0.99892, p-value = 0.8311</code></pre>
+<p>El QQplot anterior nos está indicando que los cuantiles de los
+residuos del modelo se ajustan bien a los cuantiles teóricos normales,
+lo que nos hace pensar a priori que, si se realiza un test de normalidad
+formal en los residuos, este rechazará la NO normalidad. Realizando la
+prueba formal de Shapiro-Wilk a los residuos tenemos: con un valor P
+alto, esta nos indica que tenemos suficiente evidencia estadística para
+NO rechazar la hipótesis de normalidad en los residuos del modelo.</p>
+<p>Para obtener un panorama general del diagnostico de los residuos del
+modelo en función de su correlación se debe ejecutar la función <span
+class="math inline">\(tsdiag(Modelo)\)</span> en R. La función permite
+vizualizar tres gráficos:</p>
+<p><strong>1.</strong> Residuos estandarizados vs el tiempo: Permite
+identificar la tendencia de los residuos del modelo, si estos no tienen
+una tendencia clara nos indica que los residuos se distribuyen de manera
+aleatoria y no muestran un patrón sistemático o una dirección específica
+a medida que pasa el tiempo (sería lo adecuado).</p>
+<p><strong>2.</strong> El segundo gráfico es la ACF de los residuos: Ya
+explorado en los primeros dos tutoriales.</p>
+<p><strong>3.</strong> Rezago vs valores P de la prueba de Ljung-Box:
+Permite evaluar la presencia de autocorrelación en los residuos de un
+modelo. La prueba de Ljung-Box es una prueba estadística que busca
+determinar si hay autocorrelación en los residuos en diferentes rezagos
+o retardos. EL ǵrafico muestra la prueba para los primeros diez rezagos.
+La linea por defecto que traza el gráfico es una significancia del 5%.
+Si los puntos están por arriba de la linea, indica que los errores no
+tiene autocorrealción.</p>
+<p>Siguiendo el anterior ejemplo, tenemos:</p>
+<pre class="r"><code>tsdiag(ModeloAR)</code></pre>
+<p><img src="Pron%C3%B3sticoST_files/figure-html/unnamed-chunk-7-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>Se concluye dado los tres gráficos, que las condiciones necesarias se
+cumplen. En caso de contar con NO normalidad del modelo, esta puede
+deberse a valores atípicos, pues si de revisarse el gráfico 1 (Residuos
+estandarizados vs el tiempo) se evidencia que hay residuos que se alejan
+significativamente de cero (se asume que los residuos son normales con
+media 0 y varianza 1), estaría indicando que los residuos que están muy
+alejados de 0 posiblemente pertenecen a observaciones atípicas. En este
+caso, es menester solucionar dichas observaciones atípicas, ya sea
+reestructurando el modelo con variables explicativas para no considerar
+la influencia de las observaciones atípicas y demás metodologías. Si no
+se comple la normalidad no se aconseja seguir con la interpretación de
+significatividad del modelo.</p>
+</div>
+<div id="section-significatividad-de-los-coeficientes"
+class="section level4">
+<h4><strong>Significatividad de los coeficientes</strong></h4>
+<p>Una vez el modelo ha pasado el análisis de normalidad en sus errores,
+se debe ver la significancia de cada coeficiente estimado. La función
+<span class="math inline">\(arima()\)</span> en R por defecto no ofrece
+la prueba de hipótesis para esto. Puede dejecutarla manualmente o en su
+defecto, usar la función <span class="math inline">\(coeftest()\)</span>
+del paquete <span class="math inline">\(lmtest\)</span>.</p>
+<pre class="r"><code>library(&quot;lmtest&quot;)
+coeftest(ModeloAR)</code></pre>
+<pre><code>
+z test of coefficients:
+
+            Estimate Std. Error z value  Pr(&gt;|z|)    
+ar1        -0.693661   0.022832 -30.381 &lt; 2.2e-16 ***
+intercept 235.483185   1.556699 151.271 &lt; 2.2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>Como se evidencia, el parámetro AR(1) es significativo (la principal
+utilidad del análisis de significancia es cuando se cuenta con una
+mezcla de procesos AR(p) y M(q)).</p>
+</div>
+<div id="section-pronóstico" class="section level4">
+<h4><strong>Pronóstico</strong></h4>
+<p>Una vez que se ha elegido el modelo más adecuado para los datos de la
+serie temporal, los parámetros del modelo ARIMA se pueden utilizar como
+una herramienta predictiva para pronosticar valores futuros de la serie.
+Notar que el valor de “d” tiene un efecto en los intervalos de
+predicción, ya que estos aumentan en tamaño a medida que “d” se
+incrementa. Cuando “d” es igual a cero, todos los intervalos de
+predicción serán esencialmente iguales, ya que la desviación estándar
+del pronóstico a largo plazo se aproxima a la desviación estándar de los
+datos históricos. En R los pronósticos son:</p>
+<ul>
+<li><p>Para conocer los valores pronósticados use: <span
+class="math inline">\(forecast(Modelo)\)</span> del paquete <span
+class="math inline">\(forecast\)</span></p></li>
+<li><p>Para graficar los valores pronósticados use: <span
+class="math inline">\(autoplot(forecast(Modelo))\)</span> del paquete
+<span class="math inline">\(forecast\)</span></p></li>
+</ul>
+<p>Por ejemplo:</p>
+<pre class="r"><code>library(&quot;forecast&quot;)
+kable(forecast(ModeloAR))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Point Forecast</th>
+<th align="right">Lo 80</th>
+<th align="right">Hi 80</th>
+<th align="right">Lo 95</th>
+<th align="right">Hi 95</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1002</td>
+<td align="right">302.4098</td>
+<td align="right">195.55196</td>
+<td align="right">409.2676</td>
+<td align="right">138.9848434</td>
+<td align="right">465.8347</td>
+</tr>
+<tr class="even">
+<td align="left">1003</td>
+<td align="right">189.0588</td>
+<td align="right">59.00952</td>
+<td align="right">319.1082</td>
+<td align="right">-9.8344226</td>
+<td align="right">387.9521</td>
+</tr>
+<tr class="odd">
+<td align="left">1004</td>
+<td align="right">267.6859</td>
+<td align="right">127.84153</td>
+<td align="right">407.5303</td>
+<td align="right">53.8123801</td>
+<td align="right">481.5595</td>
+</tr>
+<tr class="even">
+<td align="left">1005</td>
+<td align="right">213.1454</td>
+<td align="right">68.82466</td>
+<td align="right">357.4662</td>
+<td align="right">-7.5741357</td>
+<td align="right">433.8649</td>
+</tr>
+<tr class="odd">
+<td align="left">1006</td>
+<td align="right">250.9780</td>
+<td align="right">104.55216</td>
+<td align="right">397.4039</td>
+<td align="right">27.0389954</td>
+<td align="right">474.9171</td>
+</tr>
+<tr class="even">
+<td align="left">1007</td>
+<td align="right">224.7350</td>
+<td align="right">77.30697</td>
+<td align="right">372.1631</td>
+<td align="right">-0.7367293</td>
+<td align="right">450.2068</td>
+</tr>
+<tr class="odd">
+<td align="left">1008</td>
+<td align="right">242.9388</td>
+<td align="right">95.03091</td>
+<td align="right">390.8466</td>
+<td align="right">16.7332159</td>
+<td align="right">469.1443</td>
+</tr>
+<tr class="even">
+<td align="left">1009</td>
+<td align="right">230.3115</td>
+<td align="right">82.17338</td>
+<td align="right">378.4497</td>
+<td align="right">3.7537697</td>
+<td align="right">456.8693</td>
+</tr>
+<tr class="odd">
+<td align="left">1010</td>
+<td align="right">239.0705</td>
+<td align="right">90.82169</td>
+<td align="right">387.3194</td>
+<td align="right">12.3434891</td>
+<td align="right">465.7976</td>
+</tr>
+<tr class="even">
+<td align="left">1011</td>
+<td align="right">232.9948</td>
+<td align="right">84.69269</td>
+<td align="right">381.2969</td>
+<td align="right">6.1863028</td>
+<td align="right">459.8032</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>autoplot(forecast(ModeloAR))</code></pre>
+<p><img src="Pron%C3%B3sticoST_files/figure-html/unnamed-chunk-10-1.png" width="624" style="display: block; margin: auto;" /></p>
+<p>También puede realizar los <span class="math inline">\(k\)</span>
+primeros pronósticos con la función “sarima.for” en R.</p>
+</div>
+<div
+id="section-revisión-de-observaciones-atípicas-y-reestructuración-del-modelo"
+class="section level4">
+<h4>Revisión de observaciones atípicas y reestructuración del
+modelo</h4>
+<p>En este anexo se supone se ha visto teóricamente la creación de las
+variables explicativas para así crear la matriz de diseño. En tal caso,
+la metodología propone ara mejorar la normalidad en los residuos del
+modelo reestructurar el modelo con base en variables dicotómicas que
+considerarán una desviasión del ajuste del modelo con respecto a la
+media para los tiempos de las observaciones atípicas. Es decir, sea por
+ejemplo el modelo AR(1):</p>
+<p><span class="math display">\[
+Z_t=\beta x_t+ \frac{\theta(B)}{\phi(B)} a_t
+\]</span></p>
+<p>Donde:</p>
+<ul>
+<li><span class="math inline">\(x_i\)</span> es una variable dicotómica,
+donde es igual a 0 para los tiempos no atípicos y 1 para los tiempos
+atípicos.</li>
+<li><span class="math inline">\(\beta\)</span> es el coeficiente
+asociado a xi.</li>
+</ul>
+<p>Es decir, el proceso queda eescrito en dos formas:</p>
+<p><span class="math display">\[
+Z_t=\left\{\begin{matrix}
+\phi(B)^{-1} a_t;\forall\neq t  \text{ considerado atípico }
+\\
+\beta_i+\phi(B)^{-1} a_t;\forall = t  \text{ considerado atípico }
+\end{matrix}\right.
+\]</span></p>
+<p>Donde <span class="math inline">\(\phi(B) = (1 − \phi B)\)</span> y
+<span class="math inline">\(Z_t\)</span> será <span
+class="math inline">\(\phi(B)a_t\)</span> (proceso AR(1)) para las
+observaciones diferentes de las atípicas; para las observaciones
+atípicas <span class="math inline">\(Z_t\)</span> será <span
+class="math inline">\(\beta_i + \phi(B)a_t\)</span>, es decir, un
+proceso AR(1) más una desviación del ajuste del modelo respecto a su
+media.</p>
+<div id="section-ejemplo" class="section level5">
+<h5>Ejemplo</h5>
+<p>Sea la siguiente figura de una serie:</p>
+<pre class="r"><code>Ejemplo=read.table(&quot;./data/Ejemplo.txt&quot;);Serie1=ts(Ejemplo)
+Modelo=arima(Ejemplo,c(1,0,0), method=&quot;CSS-ML&quot;,include.mean=TRUE)
+Residuos=Modelo$residuals
+tsdiag(Modelo)</code></pre>
+<p><img src="Pron%C3%B3sticoST_files/figure-html/unnamed-chunk-11-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>Si se realiza la prueba Shapiro para los residuos se tiene:</p>
+<pre class="r"><code>shapiro.test(Modelo$residuals)</code></pre>
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  Modelo$residuals
+W = 0.86907, p-value &lt; 2.2e-16</code></pre>
+<p>ES decir, se rechaza la hipótesis de normalidad para los errores (5%
+de significancia).Note que en el gráfico de residuos estandarizados del
+modelo, se evidencia que hay residuos muy alejados de 0, lo que nos
+indica posibles puntos atípicos influyentes; dado lo anterior, se
+extraen las observaciones que están mas de 2.5 desviaciones estandar
+alejadas de cero, estas observaciones son:</p>
+<pre class="r"><code>Residuos_Est=Residuos/(Modelo$sigma2)^0.5 # Se crean los residuos estandarizados
+índice=(abs(Residuos_Est)&gt;2.5)
+Tabla_atipicos=cbind(1:1000,Residuos_Est, índice)## 1 para abs(Residuos_Est)&gt;2.5 y 0 si no
+ValoresATI=Tabla_atipicos[índice==1,] ## Selecciona los valores con abs(Residuos_Est)&gt;2.5
+kable(ValoresATI)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">1:1000</th>
+<th align="right">Residuos_Est</th>
+<th align="right">índice</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">80</td>
+<td align="right">-2.607151</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">120</td>
+<td align="right">-12.274002</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">121</td>
+<td align="right">-8.027084</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">179</td>
+<td align="right">3.175131</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">531</td>
+<td align="right">-2.662725</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">559</td>
+<td align="right">6.755488</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">560</td>
+<td align="right">4.424066</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">691</td>
+<td align="right">2.618066</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">966</td>
+<td align="right">2.551656</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>Como son 9 observaciones atípicas, se crean las variables
+explicativas en R y así crear la matriz de diseño (matriz <span
+class="math inline">\(X_{1000x9}\)</span>) que multiplicará al vector de
+coeficientes <span class="math inline">\(\beta_{9x1}\)</span>. Note que
+en la matriz de diseño hay <span class="math inline">\(1000\)</span>
+filas porque la serie es este tamaño. En R esto es:</p>
+<pre class="r"><code>#----- generación de las variables indicadoras
+ind80=rep(0, times=1000);ind80[80]=1;ind120=rep(0, times=1000);ind120[120]=1;
+ind121=rep(0, times=1000);ind121[121]=1;ind179=rep(0, times=1000);ind179[179]=1;
+ind531=rep(0, times=1000);ind531[531]=1;ind559=rep(0, times=1000);ind559[559]=1;
+ind560=rep(0, times=1000);ind560[560]=1;ind691=rep(0, times=1000);ind691[691]=1;
+ind966=rep(0, times=1000);ind966[966]=1
+
+#-----Matriz de diseño
+atipicos=as.matrix(cbind(ind80,ind120,ind121,ind179,ind531,ind559,ind560,ind691,ind966))</code></pre>
+<p>Finalmente, ajustar un modelo AR(1) con variables explicativas para
+no considerar la influencia de las observaciones atípicas en R se
+escribe:</p>
+<pre class="r"><code>ModeloAR_Atip=arima(Serie1, xreg=atipicos, order = c(1, 0, 0),method = c(&quot;CSS-ML&quot;))</code></pre>
+<p>Donde el argumento <span class="math inline">\(xreg\)</span>
+representa la matriz de valores que se consideran influyentes.</p>
+<p>Ahora, note que la NO normalidad ha sido corregida, al parecer los
+nieve datos eran influyentes:</p>
+<pre class="r"><code>shapiro.test(ModeloAR_Atip$residuals)</code></pre>
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  ModeloAR_Atip$residuals
+W = 0.99893, p-value = 0.8348</code></pre>
+<p>La metodología anterior es aplicable a cualquier modelo <span
+class="math inline">\(ARIMA(p,d,q)\)</span>.</p>
+<p>Ahora, es momento de pasar a los problemas.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="section-problemas" class="section level2">
+<h2><strong>PROBLEMAS</strong></h2>
+<div id="section-problema-1" class="section level3">
+<h3><strong>Problema 1</strong></h3>
+<p>Suponga usted cuenta con datos medidos en el tiempo sobre el voltaje
+de determinado sistema eléctrico. Los datos los encuentra en un archivo
+txt llamado “Voltaje”.</p>
+</div>
+<div id="section-realice" class="section level3">
+<h3><strong>1. Realice:</strong></h3>
+<ul>
+<li>Importe los datos, ajuste y grafique la serie temporal.</li>
+<li>¿La serie es estacionaria?</li>
+<li>Con la PACF y ACF ajuste un modelo que considere pertinente para
+modelar la serie</li>
+</ul>
+<div class="tutorial-exercise" data-label="p1" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="20">
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p1-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code>#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+Serie=read.table(&quot;./data/S1.txt&quot;) 
+
+tseries::adf.test(ts) # prueba formal</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p1-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code>#librerias
+library(tseries) # libreria para la prueba de  Dickey y Fuller 
+
+# cargar la data
+Voltaje=read.table(&quot;./data/Voltaje.txt&quot;) 
+
+# Crear y graficar  la serie ¿Es estacionaria?
+Serie=ts(Voltaje)
+plot(Serie) # Sí parece ser estacionaria
+
+# Prueba formal de Dickey y Fuller 
+tseries::adf.test(Serie) # es estacionaria
+
+# graficando la ACF y PACF
+acf(Serie)
+pacf(Serie)
+
+# Modelo 
+Modelo=arima(Serie, c(1,0,0), method=&quot;CSS-ML&quot;,include.mean=TRUE)</code></pre>
+</div>
+</div>
+<div
+id="section-para-el-modelo-ajustado-anteriormente-se-cumplen-los-supuestos-realice-los-gráficos-y-las-pruebas-necesarias-en-r."
+class="section level3">
+<h3><strong>2. ¿Para el modelo ajustado anteriormente se cumplen los
+supuestos? Realice los gráficos y las pruebas necesarias en
+R.</strong></h3>
+<div class="tutorial-exercise" data-label="p2" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="20">
+<pre class="text"><code># cargar la data
+Voltaje=read.table(&quot;./data/Voltaje.txt&quot;) 
+
+# Crear y graficar  la serie , ajustar modelo
+Serie=ts(Voltaje)
+Modelo=arima(Serie, c(1,0,0), method=&quot;CSS-ML&quot;,include.mean=TRUE)
+
+# Siga con el código debajo:</code></pre>
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p2-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code>#- Recuerde que la validación se realiza sobre los residuos: resituals(Nombre_Modelo)
+#- tsdiag() para realizar los gráficos vistos en la introducción sobre validación
+# - shapiro.test() para realizar la prueba de normalidad</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p2-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Diagnóstico sobre los errores
+Residuos=residuals(Modelo)
+
+# Gŕaficos de diagnóstico
+tsdiag(Modelo)
+
+#- EN el primero parecen indicar datos atípicos, además no indica tendencia.
+#- ACF indica un AR(1).
+#- La prueba no indica problemas de correlación en los errores.
+
+# Normaliad en los errores
+
+shapiro.test(Residuos) # No hay normalidad</code></pre>
+</div>
+</div>
+<div
+id="section-reestructure-el-modelo-con-variables-explicativas-para-manejar-los-datos-atípicos-se-soluciona-algún-incumplimiento-de-un-supuesto-finalmente-imprima-los-pronósticos-sobre-el-voltaje-en-el-sistema-además-grafíquelos."
+class="section level3">
+<h3><strong>3. Reestructure el modelo con variables explicativas para
+manejar los datos atípicos, ¿Se soluciona algún incumplimiento de un
+supuesto? Finalmente Imprima los pronósticos sobre el Voltaje en el
+sistema, además grafíquelos. </strong></h3>
+<div class="tutorial-exercise" data-label="p3" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="20">
+<pre class="text"><code># cargar la data
+Voltaje=read.table(&quot;./data/Voltaje.txt&quot;) 
+
+# Crear y graficar  la serie , ajustar modelo
+Serie=ts(Voltaje)
+Modelo=arima(Serie, c(1,0,0), method=&quot;CSS-ML&quot;,include.mean=TRUE)
+Residuos=residuals(Modelo) # residuos
+
+# Siga con el código debajo:</code></pre>
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p3-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Recuerde debe identificar observaciones atípicas: Por ejemplo, en el primer gráfico del apartado anterior, puede ver que la mayoría de los residuos oscila entre -2.5 y 2.5
+
+# Para extraerlos cree un índice, por ejemplo:
+
+Ind=(abs(RESIDUOS)&gt;2.5)
+
+# Luego creee la tabla indicadora
+
+Tabla_atipicos=cbind(1:n ,RESIDUOS, Ind) # 1 para abs(Residuos_Est)&gt;2.5 y 0 si no
+
+# Por último no olvide selecinoar sólo los valroes con abs(Residuos_Est)&gt;2.5, es decir, iguales a 1.</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p3-hint-2"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Una vez conoce los índices de las variables atípicas, genere la matriz de variables indicadoras: por ejemplo
+
+ind1=rep(0, times=n);ind80[indice_encontrado]=1
+
+# Finalmente cree la matrix de diseño:
+
+atípicos=as.matrix(ind1,ind2,ind3)</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p3-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Crear rediuos estandarizados
+
+Residuos_Est=Residuos/(Modelo$sigma^0.5)
+
+# Conocer los valores atípicos
+índice=(abs(Residuos_Est)&gt;2.5)
+Tabla_atipicos=cbind(1:1000,Residuos_Est, índice)## 1 para abs(Residuos_Est)&gt;2.5 y 0 si no
+ValoresATI=Tabla_atipicos[índice==1,] ## Selecciona los valores con abs(Residuos_Est)&gt;2.5
+ValoresATI
+
+# crear la matrix de diseño
+ind80=rep(0, times=1000);ind80[80]=1;ind120=rep(0, times=1000);ind120[120]=1;
+ind121=rep(0, times=1000);ind121[121]=1;ind179=rep(0, times=1000);ind179[179]=1;
+ind531=rep(0, times=1000);ind531[531]=1;ind559=rep(0, times=1000);ind559[559]=1;
+ind560=rep(0, times=1000);ind560[560]=1;ind691=rep(0, times=1000);ind691[691]=1;
+ind966=rep(0, times=1000);ind966[966]=1
+
+atipicos=as.matrix(cbind(ind80,ind120,ind121,ind179,ind531,ind559,ind560,ind691,ind966))
+
+
+# ajustar el modelo con variables explicativas
+Modelo_Atip=arima(Serie, xreg=atipicos, order = c(1, 0, 0),method = c(&quot;CSS-ML&quot;))
+
+
+# Pronósticos
+library(&quot;forecast&quot;)
+kable(forecast(Modelo))
+
+# gráfico de pronósticos
+autoplot(forecast(Modelo))</code></pre>
+</div>
+</div>
+<div id="section-problema-2" class="section level3">
+<h3><strong>Problema 2</strong></h3>
+<p>La base de datos “co2” es una colección de mediciones históricas de
+dióxido de carbono (CO2) en la atmósfera. Estos datos representan una
+serie temporal que abarca un período de varios años y han sido
+recopilados a partir de diversas estaciones de monitoreo alrededor del
+mundo. Los datos están en formato <span
+class="math inline">\(xlsx\)</span>. La base cuenta con tres variables,
+a saber: CO2 (CO2), Año (Year) y mes (Month). Realice:</p>
+</div>
+<div
+id="section-importe-los-datos-cree-la-serie-para-la-variable-co2-de-tal-forma-que-inicie-1959-y-su-frecuencia-sea-mensual.-es-estacionaria"
+class="section level3">
+<h3><strong>1.Importe los datos, cree la serie para la variable CO2 de
+tal forma que inicie 1959 y su frecuencia sea mensual. ¿es estacionaria?
+</strong></h3>
+<div class="tutorial-exercise" data-label="p4" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="10">
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p4-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Use: read.xlsx(&quot;./data/...&quot;)</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p4-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code>co2=read.xlsx(&quot;./data/co2.xlsx&quot;) 
+Serie&lt;-ts(co2$CO2, start = c(1959,1), frequency = 12)
+plot(Serie)
+# No es estacionaria</code></pre>
+</div>
+</div>
+<div
+id="section-descomponga-la-serie-y-defina-la-cantidad-de-diferenciaciones-regulares-y-estacionales-pertinentes.-la-serie-diferenciada-es-estacionaria"
+class="section level3">
+<h3><strong>2. Descomponga la serie y defina la cantidad de
+diferenciaciones regulares y estacionales pertinentes. ¡La serie
+diferenciada es estacionaria?</strong></h3>
+<div class="tutorial-exercise" data-label="p5" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="10">
+<pre class="text"><code>co2=read.xlsx(&quot;./data/co2.xlsx&quot;) 
+Serie&lt;-ts(co2$CO2, start = c(1959,1), frequency = 12)
+
+# Siga con el código debajo:</code></pre>
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p5-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Use: decompose() para descomponer la serie, además use las funciones: ndiffs() y nsdiffs()</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p5-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Descomposición
+Descomposición=decompose(Serie)
+plot(Descomposición)
+
+ndiffs(Serie) # se requiere una diferencia para eliminar la tendencia
+
+# Componentes estacional
+boxplot(Serie~cycle(Serie)) # compara la serie temporal con la componente cíclica
+
+# Como se puede ver, el componentes estacionar a diferenciar es igual a 12. Finalmente la serie diferenciada es:
+
+Serie_dif=diff(Serie, lag = 12)
+
+plot(Serie_dif) # Como puede ver, se ha eliminado tanto la componente de tendencia y la estacional,
+
+library(tseries) # se realiza la prueba de Dickey-Fulle
+adf.test(Serie_dif) # La serie es estacinaria</code></pre>
+</div>
+</div>
+<div
+id="section-grafique-la-pacf-y-acf-ajuste-tres-modelos-que-crea-pertinente-para-la-serie-no-olvide-indicar-las-diferenciaciones-.comparelos-y-selecione-uno-de-ellos"
+class="section level3">
+<h3><strong>3. Grafique la PACF y ACF, ajuste tres modelos que crea
+pertinente para la serie (no olvide indicar las diferenciaciones)
+.Comparelos y selecione uno de ellos</strong></h3>
+<div class="tutorial-exercise" data-label="p6" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="10">
+<pre class="text"><code>co2=read.xlsx(&quot;./data/co2.xlsx&quot;) 
+Serie&lt;-ts(co2$CO2, start = c(1959,1), frequency = 12)
+Serie_dif=diff(Serie, lag = 12)
+
+# Siga con el código debajo:</code></pre>
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p6-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Use: Modelo1=arima(Serie, order=c(..), seasonal=list(....),period=..))
+
+# para comprar use AIC(Modelos1, ...)</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p6-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># ACF y PACF
+
+acf(Serie_dif);pacf(Serie_dif)
+
+# Ajuste de tres modelos
+
+Modelo1=arima(Serie, order=c(0,1,2), seasonal=list(order=c(0,1,1),period=12))
+Modelo2=arima(Serie, order=c(1,1,2), seasonal=list(order=c(0,1,1),period=12))
+Modelo3=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))
+
+
+AIC(Modelo1,Modelo2,Modelo3) # El mejor modelo parece ser el 3, ARIMA(0,1,1)(0,1,1)</code></pre>
+</div>
+</div>
+<div
+id="section-ralice-el-diagnóstico-del-modelo-selecionado-y-el-gráfico-de-pronósticos"
+class="section level3">
+<h3><strong>4. Ralice el diagnóstico del modelo selecionado y el gráfico
+de pronósticos</strong></h3>
+<div class="tutorial-exercise" data-label="p7" data-completion="1"
+data-diagnostics="1" data-startover="1" data-lines="10">
+<pre class="text"><code>co2=read.xlsx(&quot;./data/co2.xlsx&quot;) 
+Serie&lt;-ts(co2$CO2, start = c(1959,1), frequency = 12)
+Modelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))
+
+# Siga con el código debajo:</code></pre>
+<script type="application/json" data-ui-opts="1">{"engine":"r","has_checker":true,"caption":"<span data-i18n=\"text.enginecap\" data-i18n-opts=\"{&quot;engine&quot;:&quot;R&quot;}\">R Code<\/span>"}</script>
+</div>
+<div class="tutorial-exercise-support" data-label="p7-hint-1"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code># Usea tsdiag() y shapiro.test()</code></pre>
+</div>
+<div class="tutorial-exercise-support" data-label="p7-solution"
+data-completion="1" data-diagnostics="1" data-startover="1"
+data-lines="0">
+<pre class="text"><code>Modelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))
+
+
+
+# Diagnóstico
+tsdiag(Modelo)
+
+# Normalidad
+Residuos=residuals(Modelo)
+shapiro.test(Residuos)
+
+
+# Todo parece estar correcto
+
+# pronósticos:
+autoplot(forecast(Modelo))</code></pre>
+</div>
+<p>
+<script type="application/shiny-prerendered" data-context="server-start">
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	comment = NA
+)
+library(knitr)
+library(learnr)
+library(ggplot2)
+library(RCurl)
+library(gradethis)
+knitr::opts_chunk$set(exercise.warn_invisible = FALSE)
+# colores
+c1="#FF7F00" # NARANJA COLOR PRINCIPAL
+c2="#034a94" # AZUL FUERTE COLOR SECUNDARIO  
+c3="#0eb0c6" # AZUL CLARO COLOR TERCEARIO  
+c4="#686868" # GRIS COLOR TEXTO 
+#library(PerformanceAnalytics)
+#library(patchwork)
+#-----------------------------------------------
+Theme1= theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+#-------------------------------------------------------------------------
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::register_http_handlers(session, metadata = NULL)
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::prepare_tutorial_state(session)
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::i18n_observe_tutorial_language(input, session)
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+session$onSessionEnded(function() {
+        learnr:::event_trigger(session, "session_stop")
+      })
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p1-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p1-code-editor`)), session)
+output$`tutorial-exercise-p1-output` <- renderUI({
+  `tutorial-exercise-p1-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p1", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p1", code = "\n\n", opts = list(
+        label = "\"p1\"", exercise = "TRUE", exercise.lines = "20"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p1-check")), solution = structure(c("#librerias", 
+    "library(tseries) # libreria para la prueba de  Dickey y Fuller ", 
+    "", "# cargar la data", "Voltaje=read.table(\"./data/Voltaje.txt\") ", 
+    "", "# Crear y graficar  la serie ¿Es estacionaria?", "Serie=ts(Voltaje)", 
+    "plot(Serie) # Sí parece ser estacionaria", "", "# Prueba formal de Dickey y Fuller ", 
+    "tseries::adf.test(Serie) # es estacionaria", "", "# graficando la ACF y PACF", 
+    "acf(Serie)", "pacf(Serie)", "", "# Modelo ", "Modelo=arima(Serie, c(1,0,0), method=\"CSS-ML\",include.mean=TRUE)", 
+    ""), chunk_opts = list(label = "p1-solution")), tests = NULL, 
+    options = list(eval = FALSE, echo = TRUE, results = "markup", 
+        tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
+        comment = NA, highlight = FALSE, size = "normalsize", 
+        background = "#F7F7F7", strip.white = TRUE, cache = 0, 
+        cache.path = "PronósticoST_cache/html/", cache.vars = NULL, 
+        cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
+        cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
+        fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p1", exercise = TRUE, 
+        exercise.lines = 20, code = c("", "", ""), out.width.px = 624, 
+        out.height.px = 384, params.src = "p1, exercise=TRUE, exercise.lines = 20", 
+        fig.num = 0L, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p2-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p2-code-editor`)), session)
+output$`tutorial-exercise-p2-output` <- renderUI({
+  `tutorial-exercise-p2-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p2", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p2", code = "\n# cargar la data\nVoltaje=read.table(\"./data/Voltaje.txt\") \n\n# Crear y graficar  la serie , ajustar modelo\nSerie=ts(Voltaje)\nModelo=arima(Serie, c(1,0,0), method=\"CSS-ML\",include.mean=TRUE)\n\n# Siga con el código debajo:", 
+        opts = list(label = "\"p2\"", exercise = "TRUE", exercise.lines = "20"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p2-check")), solution = structure(c("", 
+    "# Diagnóstico sobre los errores", "Residuos=residuals(Modelo)", 
+    "", "# Gŕaficos de diagnóstico", "tsdiag(Modelo)", "", 
+    "#- EN el primero parecen indicar datos atípicos, además no indica tendencia.", 
+    "#- ACF indica un AR(1).", "#- La prueba no indica problemas de correlación en los errores.", 
+    "", "# Normaliad en los errores", "", "shapiro.test(Residuos) # No hay normalidad", 
+    ""), chunk_opts = list(label = "p2-solution")), tests = NULL, 
+    options = list(eval = FALSE, echo = TRUE, results = "markup", 
+        tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
+        comment = NA, highlight = FALSE, size = "normalsize", 
+        background = "#F7F7F7", strip.white = TRUE, cache = 0, 
+        cache.path = "PronósticoST_cache/html/", cache.vars = NULL, 
+        cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
+        cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
+        fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p2", exercise = TRUE, 
+        exercise.lines = 20, code = c("", "# cargar la data", 
+        "Voltaje=read.table(\"./data/Voltaje.txt\") ", "", "# Crear y graficar  la serie , ajustar modelo", 
+        "Serie=ts(Voltaje)", "Modelo=arima(Serie, c(1,0,0), method=\"CSS-ML\",include.mean=TRUE)", 
+        "", "# Siga con el código debajo:"), out.width.px = 624, 
+        out.height.px = 384, params.src = "p2, exercise=TRUE, exercise.lines = 20", 
+        fig.num = 0, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p3-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p3-code-editor`)), session)
+output$`tutorial-exercise-p3-output` <- renderUI({
+  `tutorial-exercise-p3-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p3", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p3", code = "\n# cargar la data\nVoltaje=read.table(\"./data/Voltaje.txt\") \n\n# Crear y graficar  la serie , ajustar modelo\nSerie=ts(Voltaje)\nModelo=arima(Serie, c(1,0,0), method=\"CSS-ML\",include.mean=TRUE)\nResiduos=residuals(Modelo) # residuos\n\n# Siga con el código debajo:\n", 
+        opts = list(label = "\"p3\"", exercise = "TRUE", exercise.lines = "20"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p3-check")), solution = structure(c("", 
+    "# Crear rediuos estandarizados", "", "Residuos_Est=Residuos/(Modelo$sigma^0.5)", 
+    "", "# Conocer los valores atípicos", "índice=(abs(Residuos_Est)>2.5)", 
+    "Tabla_atipicos=cbind(1:1000,Residuos_Est, índice)## 1 para abs(Residuos_Est)>2.5 y 0 si no", 
+    "ValoresATI=Tabla_atipicos[índice==1,] ## Selecciona los valores con abs(Residuos_Est)>2.5", 
+    "ValoresATI", "", "# crear la matrix de diseño", "ind80=rep(0, times=1000);ind80[80]=1;ind120=rep(0, times=1000);ind120[120]=1;", 
+    "ind121=rep(0, times=1000);ind121[121]=1;ind179=rep(0, times=1000);ind179[179]=1;", 
+    "ind531=rep(0, times=1000);ind531[531]=1;ind559=rep(0, times=1000);ind559[559]=1;", 
+    "ind560=rep(0, times=1000);ind560[560]=1;ind691=rep(0, times=1000);ind691[691]=1;", 
+    "ind966=rep(0, times=1000);ind966[966]=1", "", "atipicos=as.matrix(cbind(ind80,ind120,ind121,ind179,ind531,ind559,ind560,ind691,ind966))", 
+    "", "", "# ajustar el modelo con variables explicativas", 
+    "Modelo_Atip=arima(Serie, xreg=atipicos, order = c(1, 0, 0),method = c(\"CSS-ML\"))", 
+    "", "", "# Pronósticos", "library(\"forecast\")", "kable(forecast(Modelo))", 
+    "", "# gráfico de pronósticos", "autoplot(forecast(Modelo))", 
+    ""), chunk_opts = list(label = "p3-solution")), tests = NULL, 
+    options = list(eval = FALSE, echo = TRUE, results = "markup", 
+        tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
+        comment = NA, highlight = FALSE, size = "normalsize", 
+        background = "#F7F7F7", strip.white = TRUE, cache = 0, 
+        cache.path = "PronósticoST_cache/html/", cache.vars = NULL, 
+        cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
+        cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
+        fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p3", exercise = TRUE, 
+        exercise.lines = 20, code = c("", "# cargar la data", 
+        "Voltaje=read.table(\"./data/Voltaje.txt\") ", "", "# Crear y graficar  la serie , ajustar modelo", 
+        "Serie=ts(Voltaje)", "Modelo=arima(Serie, c(1,0,0), method=\"CSS-ML\",include.mean=TRUE)", 
+        "Residuos=residuals(Modelo) # residuos", "", "# Siga con el código debajo:", 
+        ""), out.width.px = 624, out.height.px = 384, params.src = "p3, exercise=TRUE, exercise.lines = 20", 
+        fig.num = 0, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p4-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p4-code-editor`)), session)
+output$`tutorial-exercise-p4-output` <- renderUI({
+  `tutorial-exercise-p4-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p4", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p4", code = "\n\n\n", opts = list(
+        label = "\"p4\"", exercise = "TRUE", exercise.lines = "10"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p4-check")), solution = structure(c("", 
+    "co2=read.xlsx(\"./data/co2.xlsx\") ", "Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)", 
+    "plot(Serie)", "# No es estacionaria"), chunk_opts = list(
+        label = "p4-solution")), tests = NULL, options = list(
+        eval = FALSE, echo = TRUE, results = "markup", tidy = FALSE, 
+        tidy.opts = NULL, collapse = FALSE, prompt = FALSE, comment = NA, 
+        highlight = FALSE, size = "normalsize", background = "#F7F7F7", 
+        strip.white = TRUE, cache = 0, cache.path = "PronósticoST_cache/html/", 
+        cache.vars = NULL, cache.lazy = TRUE, dependson = NULL, 
+        autodep = FALSE, cache.rebuild = FALSE, fig.keep = "high", 
+        fig.show = "asis", fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p4", exercise = TRUE, 
+        exercise.lines = 10, code = c("", "", "", ""), out.width.px = 624, 
+        out.height.px = 384, params.src = "p4, exercise=TRUE, exercise.lines = 10", 
+        fig.num = 0L, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p5-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p5-code-editor`)), session)
+output$`tutorial-exercise-p5-output` <- renderUI({
+  `tutorial-exercise-p5-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p5", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p5", code = "\nco2=read.xlsx(\"./data/co2.xlsx\") \nSerie<-ts(co2$CO2, start = c(1959,1), frequency = 12)\n\n# Siga con el código debajo:", 
+        opts = list(label = "\"p5\"", exercise = "TRUE", exercise.lines = "10"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p5-check")), solution = structure(c("# Descomposición", 
+    "Descomposición=decompose(Serie)", "plot(Descomposición)", 
+    "", "ndiffs(Serie) # se requiere una diferencia para eliminar la tendencia", 
+    "", "# Componentes estacional", "boxplot(Serie~cycle(Serie)) # compara la serie temporal con la componente cíclica", 
+    "", "# Como se puede ver, el componentes estacionar a diferenciar es igual a 12. Finalmente la serie diferenciada es:", 
+    "", "Serie_dif=diff(Serie, lag = 12)", "", "plot(Serie_dif) # Como puede ver, se ha eliminado tanto la componente de tendencia y la estacional,", 
+    "", "library(tseries) # se realiza la prueba de Dickey-Fulle", 
+    "adf.test(Serie_dif) # La serie es estacinaria"), chunk_opts = list(
+        label = "p5-solution")), tests = NULL, options = list(
+        eval = FALSE, echo = TRUE, results = "markup", tidy = FALSE, 
+        tidy.opts = NULL, collapse = FALSE, prompt = FALSE, comment = NA, 
+        highlight = FALSE, size = "normalsize", background = "#F7F7F7", 
+        strip.white = TRUE, cache = 0, cache.path = "PronósticoST_cache/html/", 
+        cache.vars = NULL, cache.lazy = TRUE, dependson = NULL, 
+        autodep = FALSE, cache.rebuild = FALSE, fig.keep = "high", 
+        fig.show = "asis", fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p5", exercise = TRUE, 
+        exercise.lines = 10, code = c("", "co2=read.xlsx(\"./data/co2.xlsx\") ", 
+        "Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)", 
+        "", "# Siga con el código debajo:"), out.width.px = 624, 
+        out.height.px = 384, params.src = "p5, exercise=TRUE, exercise.lines = 10", 
+        fig.num = 0, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p6-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p6-code-editor`)), session)
+output$`tutorial-exercise-p6-output` <- renderUI({
+  `tutorial-exercise-p6-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p6", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p6", code = "\nco2=read.xlsx(\"./data/co2.xlsx\") \nSerie<-ts(co2$CO2, start = c(1959,1), frequency = 12)\nSerie_dif=diff(Serie, lag = 12)\n\n# Siga con el código debajo:\n\n", 
+        opts = list(label = "\"p6\"", exercise = "TRUE", exercise.lines = "10"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p6-check")), solution = structure(c("", 
+    "# ACF y PACF", "", "acf(Serie_dif);pacf(Serie_dif)", "", 
+    "# Ajuste de tres modelos", "", "Modelo1=arima(Serie, order=c(0,1,2), seasonal=list(order=c(0,1,1),period=12))", 
+    "Modelo2=arima(Serie, order=c(1,1,2), seasonal=list(order=c(0,1,1),period=12))", 
+    "Modelo3=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))", 
+    "", "", "AIC(Modelo1,Modelo2,Modelo3) # El mejor modelo parece ser el 3, ARIMA(0,1,1)(0,1,1)"
+    ), chunk_opts = list(label = "p6-solution")), tests = NULL, 
+    options = list(eval = FALSE, echo = TRUE, results = "markup", 
+        tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
+        comment = NA, highlight = FALSE, size = "normalsize", 
+        background = "#F7F7F7", strip.white = TRUE, cache = 0, 
+        cache.path = "PronósticoST_cache/html/", cache.vars = NULL, 
+        cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
+        cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
+        fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p6", exercise = TRUE, 
+        exercise.lines = 10, code = c("", "co2=read.xlsx(\"./data/co2.xlsx\") ", 
+        "Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)", 
+        "Serie_dif=diff(Serie, lag = 12)", "", "# Siga con el código debajo:", 
+        "", ""), out.width.px = 624, out.height.px = 384, params.src = "p6, exercise=TRUE, exercise.lines = 10", 
+        fig.num = 0, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+`tutorial-exercise-p7-result` <- learnr:::setup_exercise_handler(reactive(req(input$`tutorial-exercise-p7-code-editor`)), session)
+output$`tutorial-exercise-p7-output` <- renderUI({
+  `tutorial-exercise-p7-result`()
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::store_exercise_cache(structure(list(label = "p7", global_setup = structure(c("knitr::opts_chunk$set(", 
+"\techo = TRUE,", "\tmessage = FALSE,", "\twarning = FALSE,", 
+"\tcomment = NA", ")", "library(knitr)", "library(learnr)", "library(ggplot2)", 
+"library(RCurl)", "library(gradethis)", "knitr::opts_chunk$set(exercise.warn_invisible = FALSE)", 
+"# colores", "c1=\"#FF7F00\" # NARANJA COLOR PRINCIPAL", "c2=\"#034a94\" # AZUL FUERTE COLOR SECUNDARIO  ", 
+"c3=\"#0eb0c6\" # AZUL CLARO COLOR TERCEARIO  ", "c4=\"#686868\" # GRIS COLOR TEXTO ", 
+"#library(PerformanceAnalytics)", "#library(patchwork)", "#-----------------------------------------------", 
+"Theme1= theme(axis.text.x = element_blank(),", "        axis.text.y = element_blank(),", 
+"        axis.ticks = element_blank(),", "        axis.title.x = element_text(size = 12),", 
+"        axis.title.y = element_text(size = 12))", "#-------------------------------------------------------------------------"
+), chunk_opts = list(label = "setup", include = FALSE)), setup = NULL, 
+    chunks = list(list(label = "p7", code = "\nco2=read.xlsx(\"./data/co2.xlsx\") \nSerie<-ts(co2$CO2, start = c(1959,1), frequency = 12)\nModelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))\n\n# Siga con el código debajo:\n\n", 
+        opts = list(label = "\"p7\"", exercise = "TRUE", exercise.lines = "10"), 
+        engine = "r")), code_check = NULL, error_check = NULL, 
+    check = structure(c("grade_this({", "  if(identical(.result, .solution)){", 
+    "    pass(\"¡Muy bien!\")", "  }", "  fail(\"Por favor intente de nuevo, revise las pistas y/o la solución para conocer la estructura deseada\")", 
+    "})"), chunk_opts = list(label = "p7-check")), solution = structure(c("", 
+    "Modelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))", 
+    "", "", "", "# Diagnóstico", "tsdiag(Modelo)", "", "# Normalidad", 
+    "Residuos=residuals(Modelo)", "shapiro.test(Residuos)", "", 
+    "", "# Todo parece estar correcto", "", "# pronósticos:", 
+    "autoplot(forecast(Modelo))"), chunk_opts = list(label = "p7-solution")), 
+    tests = NULL, options = list(eval = FALSE, echo = TRUE, results = "markup", 
+        tidy = FALSE, tidy.opts = NULL, collapse = FALSE, prompt = FALSE, 
+        comment = NA, highlight = FALSE, size = "normalsize", 
+        background = "#F7F7F7", strip.white = TRUE, cache = 0, 
+        cache.path = "PronósticoST_cache/html/", cache.vars = NULL, 
+        cache.lazy = TRUE, dependson = NULL, autodep = FALSE, 
+        cache.rebuild = FALSE, fig.keep = "high", fig.show = "asis", 
+        fig.align = "default", fig.path = "PronósticoST_files/figure-html/", 
+        dev = "png", dev.args = NULL, dpi = 192, fig.ext = "png", 
+        fig.width = 6.5, fig.height = 4, fig.env = "figure", 
+        fig.cap = NULL, fig.scap = NULL, fig.lp = "fig:", fig.subcap = NULL, 
+        fig.pos = "", out.width = 624, out.height = NULL, out.extra = NULL, 
+        fig.retina = 2, external = TRUE, sanitize = FALSE, interval = 1, 
+        aniopts = "controls,loop", warning = FALSE, error = FALSE, 
+        message = FALSE, render = NULL, ref.label = NULL, child = NULL, 
+        engine = "r", split = FALSE, include = TRUE, purl = TRUE, 
+        max.print = 1000, exercise.timelimit = 60, exercise.checker = "function (label = NULL, solution_code = NULL, user_code = NULL, \n    check_code = NULL, envir_result = NULL, evaluate_result = NULL, \n    envir_prep = NULL, last_value = NULL, stage = NULL, ..., \n    solution_eval_fn = NULL) \n{\n    (utils::getFromNamespace(\"check_exercise\", \"gradethis\"))(label = label, \n        solution_code = solution_code, user_code = user_code, \n        check_code = check_code, envir_result = envir_result, \n        evaluate_result = evaluate_result, envir_prep = envir_prep, \n        last_value = last_value, stage = stage, ...)\n}", 
+        exercise.error.check.code = "gradethis_error_checker()", 
+        exercise.warn_invisible = FALSE, label = "p7", exercise = TRUE, 
+        exercise.lines = 10, code = c("", "co2=read.xlsx(\"./data/co2.xlsx\") ", 
+        "Serie<-ts(co2$CO2, start = c(1959,1), frequency = 12)", 
+        "Modelo=arima(Serie, order=c(0,1,1), seasonal=list(order=c(0,1,1),period=12))", 
+        "", "# Siga con el código debajo:", "", ""), out.width.px = 624, 
+        out.height.px = 384, params.src = "p7, exercise=TRUE, exercise.lines = 10", 
+        fig.num = 0, exercise.df_print = "paged"), engine = "r", 
+    version = "4"), class = c("r", "tutorial_exercise")))
+</script>
+</p>
+<!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="dependencies">
+{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["header-attrs"]},{"type":"character","attributes":{},"value":["2.21"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/pandoc"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["header-attrs.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.21"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/3.6.0"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-3.6.0.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquerylib"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.1.4"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.3.5"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","shim/html5shiv.min.js","shim/respond.min.js"]},{"type":"character","attributes":{},"value":["css/cerulean.min.css"]},{"type":"character","attributes":{},"value":["<style>h1 {font-size: 34px;}\n       h1.title {font-size: 38px;}\n       h2 {font-size: 30px;}\n       h3 {font-size: 24px;}\n       h4 {font-size: 18px;}\n       h5 {font-size: 16px;}\n       h6 {font-size: 12px;}\n       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}\n       pre:not([class]) { background-color: white }<\/style>"]},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.21"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["pagedtable"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/pagedtable-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/pagedtable.js"]},{"type":"character","attributes":{},"value":["css/pagedtable.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.21"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["textmate.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.21"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial"]},{"type":"character","attributes":{},"value":["0.11.3.9000"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial.js"]},{"type":"character","attributes":{},"value":["tutorial.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["i18n"]},{"type":"character","attributes":{},"value":["21.6.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/i18n"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["i18next.min.js","tutorial-i18n-init.js"]},{"type":"NULL"},{"type":"character","attributes":{},"value":["<script id=\"i18n-cstm-trns\" type=\"application/json\">{\"language\":\"es\",\"resources\":{\"en\":{\"translation\":{\"button\":{\"runcode\":\"Run Code\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Hint\",\"hint_plural\":\"Hints\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Next Hint\",\"hintprev\":\"Previous Hint\",\"solution\":\"Solution\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Copy to Clipboard\",\"startover\":\"Start Over\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Continue\",\"submitanswer\":\"Submit Answer\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Previous Topic\",\"nexttopic\":\"Next Topic\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Try Again\"},\"text\":{\"startover\":\"Start Over\",\"areyousure\":\"Are you sure you want to start over? (all exercise progress will be reset)\",\"youmustcomplete\":\"You must complete the\",\"exercise\":\"exercise\",\"exercise_plural\":\"exercises\",\"inthissection\":\"in this section before continuing.\",\"code\":\"Code\",\"enginecap\":\"{{engine}} $t(text.code)\",\"quiz\":\"Quiz\",\"blank\":\"blank\",\"blank_plural\":\"blanks\",\"exercisecontainsblank\":\"This exercise contains {{count}} $t(text.blank).\",\"pleasereplaceblank\":\"Please replace {{blank}} with valid code.\",\"unparsable\":\"It looks like this might not be valid R code. R cannot determine how to turn your text into a complete command. You may have forgotten to fill in a blank, to remove an underscore, to include a comma between arguments, or to close an opening <code>&quot;<\\/code>, <code>'<\\/code>, <code>(<\\/code> or <code>{<\\/code> with a matching <code>&quot;<\\/code>, <code>'<\\/code>, <code>)<\\/code> or <code>}<\\/code>.\\n\",\"unparsablequotes\":\"<p>It looks like your R code contains specially formatted quotation marks or &quot;curly&quot; quotes (<code>{{character}}<\\/code>) around character strings, making your code invalid. R requires character values to be contained in straight quotation marks (<code>&quot;<\\/code> or <code>'<\\/code>).<\\/p> {{code}} <p>Don't worry, this is a common source of errors when you copy code from another app that applies its own formatting to text. You can try replacing the code on that line with the following. There may be other places that need to be fixed, too.<\\/p> {{suggestion}}\\n\",\"unparsableunicode\":\"<p>It looks like your R code contains an unexpected special character (<code>{{character}}<\\/code>) that makes your code invalid.<\\/p> {{code}} <p>Sometimes your code may contain a special character that looks like a regular character, especially if you copy and paste the code from another app. Try deleting the special character from your code and retyping it manually.<\\/p>\\n\",\"unparsableunicodesuggestion\":\"<p>It looks like your R code contains an unexpected special character (<code>{{character}}<\\/code>) that makes your code invalid.<\\/p> {{code}} <p>Sometimes your code may contain a special character that looks like a regular character, especially if you copy and paste the code from another app. You can try replacing the code on that line with the following. There may be other places that need to be fixed, too.<\\/p> {{suggestion}}\\n\",\"and\":\"and\",\"or\":\"or\",\"listcomma\":\", \",\"oxfordcomma\":\",\"}}},\"fr\":{\"translation\":{\"button\":{\"runcode\":\"Lancer le Code\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Indication\",\"hint_plural\":\"Indications\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Indication Suivante\",\"hintprev\":\"Indication Précédente\",\"solution\":\"Solution\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Copier dans le Presse-papier\",\"startover\":\"Recommencer\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Continuer\",\"submitanswer\":\"Soumettre\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Chapitre Précédent\",\"nexttopic\":\"Chapitre Suivant\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Réessayer\"},\"text\":{\"startover\":\"Recommencer\",\"areyousure\":\"Êtes-vous certains de vouloir recommencer? (La progression sera remise à zéro)\",\"youmustcomplete\":\"Vous devez d'abord compléter\",\"exercise\":\"l'exercice\",\"exercise_plural\":\"des exercices\",\"inthissection\":\"de cette section avec de continuer.\",\"code\":\"Code\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Quiz\",\"and\":\"et\",\"or\":\"ou\",\"oxfordcomma\":\"\"}}},\"es\":{\"translation\":{\"button\":{\"runcode\":\"Ejecutar código\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Pista\",\"hint_plural\":\"Pistas\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Siguiente pista\",\"hintprev\":\"Pista anterior\",\"solution\":\"Solución\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Copiar al portapapeles\",\"startover\":\"Reiniciar\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Continuar\",\"submitanswer\":\"Enviar respuesta\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Tema anterior\",\"nexttopic\":\"Tema siguiente\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Volver a intentar\"},\"text\":{\"startover\":\"Reiniciar\",\"areyousure\":\"¿De verdad quieres empezar de nuevo? (todo el progreso del ejercicio se perderá)\",\"youmustcomplete\":\"Debes completar\",\"exercise\":\"el ejercicio\",\"exercise_plural\":\"los ejercicios\",\"inthissection\":\"en esta sección antes de continuar.\",\"code\":\"Código\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Cuestionario\",\"and\":\"y\",\"or\":\"o\",\"oxfordcomma\":\"\"}},\"custom\":{\"button\":{\"runcode\":\"Ejecutar\",\"hints\":\"Pistas\",\"startover\":\"Reiniciar\",\"continue\":\"Continuar\",\"submitanswer\":\"Enviar respuesta\",\"previoustopic\":\"Tema anterior\",\"nexttopic\":\"Siguiente tema\",\"questionsubmit\":\"Enviar respuesta\",\"questiontryagain\":\"Intentar de nuevo\"},\"text\":{\"startover\":\"Empezar de nuevo\",\"areyousure\":\"¿Estás segure que querés reiniciar? (se perderá todo el progreso)\",\"youmustcomplete\":\"Tienes que completar\",\"exercise\":\"el ejercicio\",\"exercise_plural\":\"los ejercicios\",\"inthissection\":\"en esta sección antes de continuar\"}}},\"pt\":{\"translation\":{\"button\":{\"runcode\":\"Executar código\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Dica\",\"hint_plural\":\"Dicas\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Próxima dica\",\"hintprev\":\"Dica anterior\",\"solution\":\"Solução\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Copiar para a área de transferência\",\"startover\":\"Reiniciar\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Continuar\",\"submitanswer\":\"Enviar resposta\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Tópico anterior\",\"nexttopic\":\"Próximo tópico\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Tentar novamente\"},\"text\":{\"startover\":\"Reiniciar\",\"areyousure\":\"Tem certeza que deseja começar novamente? (todo o progresso feito será perdido)\",\"youmustcomplete\":\"Você deve completar\",\"exercise\":\"o exercício\",\"exercise_plural\":\"os exercícios\",\"inthissection\":\"nesta seção antes de continuar.\",\"code\":\"Código\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Quiz\",\"and\":\"e\",\"or\":\"ou\",\"oxfordcomma\":\"\"}}},\"tr\":{\"translation\":{\"button\":{\"runcode\":\"Çalıştırma Kodu\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Ipucu\",\"hint_plural\":\"İpuçları\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Sonraki İpucu\",\"hintprev\":\"Önceki İpucu\",\"solution\":\"Çözüm\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Pano'ya Kopyala\",\"startover\":\"Baştan Başlamak\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Devam et\",\"submitanswer\":\"Cevabı onayla\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Önceki Konu\",\"nexttopic\":\"Sonraki Konu\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Tekrar Deneyin\"},\"text\":{\"startover\":\"Baştan Başlamak\",\"areyousure\":\"Baştan başlamak istediğinizden emin misiniz? (tüm egzersiz ilerlemesi kaybolacak)\",\"youmustcomplete\":\"Tamamlamalısın\",\"exercise\":\"egzersiz\",\"exercise_plural\":\"egzersizler\",\"inthissection\":\"devam etmeden önce bu bölümde\",\"code\":\"Kod\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Sınav\",\"oxfordcomma\":\"\"}}},\"emo\":{\"translation\":{\"button\":{\"runcode\":\"🏃\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"💡\",\"hint_plural\":\"$t(button.hint)\",\"hinttitle\":\"$t(button.hint)\",\"solution\":\"🎯\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"📋\",\"startover\":\"⏮\",\"startovertitle\":\"Start Over\",\"continue\":\"✅\",\"submitanswer\":\"🆗\",\"submitanswertitle\":\"Submit Answer\",\"previoustopic\":\"⬅\",\"nexttopic\":\"➡\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"🔁\"},\"text\":{\"startover\":\"⏮\",\"areyousure\":\"🤔\",\"youmustcomplete\":\"⚠️ 👉 🧑‍💻\",\"exercise\":\"\",\"exercise_plural\":\"\",\"inthissection\":\"\",\"code\":\"💻\",\"enginecap\":\"$t(text.code) {{engine}}\",\"oxfordcomma\":\"\"}}},\"eu\":{\"translation\":{\"button\":{\"runcode\":\"Kodea egikaritu\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Laguntza\",\"hint_plural\":\"Laguntza\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Aurreko laguntza\",\"hintprev\":\"Hurrengo laguntza\",\"solution\":\"Ebazpena\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Arbelean kopiatu\",\"startover\":\"Berrabiarazi\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Jarraitu\",\"submitanswer\":\"Erantzuna bidali\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Aurreko atala\",\"nexttopic\":\"Hurrengo atala\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Berriro saiatu\"},\"text\":{\"startover\":\"Berrabiarazi\",\"areyousure\":\"Berriro hasi nahi duzu? (egindako lana galdu egingo da)\",\"youmustcomplete\":\"Aurrera egin baino lehen atal honetako\",\"exercise\":\"ariketa egin behar duzu.\",\"exercise_plural\":\"ariketak egin behar dituzu.\",\"inthissection\":\"\",\"code\":\"Kodea\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Galdetegia\",\"oxfordcomma\":\"\"}}},\"de\":{\"translation\":{\"button\":{\"runcode\":\"Code ausführen\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Tipp\",\"hint_plural\":\"Tipps\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Nächster Tipp\",\"hintprev\":\"Vorheriger Tipp\",\"solution\":\"Lösung\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"In die Zwischenablage kopieren\",\"startover\":\"Neustart\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Weiter\",\"submitanswer\":\"Antwort einreichen\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Vorheriges Kapitel\",\"nexttopic\":\"Nächstes Kapitel\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Nochmal versuchen\"},\"text\":{\"startover\":\"Neustart\",\"areyousure\":\"Bist du sicher, dass du neustarten willst? (der gesamte Lernfortschritt wird gelöscht)\",\"youmustcomplete\":\"Vervollstädinge\",\"exercise\":\"die Übung\",\"exercise_plural\":\"die Übungen\",\"inthissection\":\"in diesem Kapitel, bevor du fortfährst.\",\"code\":\"Code\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Quiz\",\"blank\":\"Lücke\",\"blank_plural\":\"Lücken\",\"pleasereplaceblank\":\"Bitte ersetze {{blank}} mit gültigem Code.\",\"unparsable\":\"Dies scheint kein gültiger R Code zu sein. R kann deinen Text nicht in einen gültigen Befehl übersetzen. Du hast vielleicht vergessen, die Lücke zu füllen, einen Unterstrich zu entfernen, ein Komma zwischen Argumente zu setzen oder ein eröffnendes <code>&quot;<\\/code>, <code>'<\\/code>, <code>(<\\/code> oder <code>{<\\/code> mit einem zugehörigen <code>&quot;<\\/code>, <code>'<\\/code>, <code>)<\\/code> oder <code>}<\\/code> zu schließen.\\n\",\"and\":\"und\",\"or\":\"oder\",\"listcomma\":\", \",\"oxfordcomma\":\",\"}}},\"ko\":{\"translation\":{\"button\":{\"runcode\":\"코드 실행\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"힌트\",\"hint_plural\":\"힌트들\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"다음 힌트\",\"hintprev\":\"이전 힌트\",\"solution\":\"솔루션\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"클립보드에 복사\",\"startover\":\"재학습\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"다음 학습으로\",\"submitanswer\":\"정답 제출\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"이전 토픽\",\"nexttopic\":\"다음 토픽\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"재시도\"},\"text\":{\"startover\":\"재학습\",\"areyousure\":\"다시 시작 하시겠습니까? (모든 예제의 진행 정보가 재설정됩니다)\",\"youmustcomplete\":\"당신은 완료해야 합니다\",\"exercise\":\"연습문제\",\"exercise_plural\":\"연습문제들\",\"inthissection\":\"이 섹션을 실행하기 전에\",\"code\":\"코드\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"퀴즈\",\"blank\":\"공백\",\"blank_plural\":\"공백들\",\"exercisecontainsblank\":\"이 연습문제에는 {{count}}개의 $t(text.blank)이 포함되어 있습니다.\",\"pleasereplaceblank\":\"{{blank}}를 유효한 코드로 바꾸십시오.\",\"unparsable\":\"이것은 유효한 R 코드가 아닐 수 있습니다. R은 텍스트를 완전한 명령으로 변환하는 방법을 결정할 수 없습니다. 당신은 공백이나 밑줄을 대체하여 채우기, 인수를 컴마로 구분하기, 또는 <code>&quot;<\\/code>, <code>'<\\/code>, <code>(<\\/code> , <code>{<\\/code>로 시작하는 구문을 닫는 <code>&quot;<\\/code>, <code>'<\\/code>, <code>)<\\/code>, <code>}<\\/code>을 잊었을 수도 있습니다.\\n\",\"and\":\"그리고\",\"or\":\"혹은\",\"listcomma\":\", \",\"oxfordcomma\":\"\"}}},\"zh\":{\"translation\":{\"button\":{\"runcode\":\"运行代码\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"提示\",\"hint_plural\":\"提示\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"下一个提示\",\"hintprev\":\"上一个提示\",\"solution\":\"答案\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"复制到剪切板\",\"startover\":\"重新开始\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"继续\",\"submitanswer\":\"提交答案\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"上一专题\",\"nexttopic\":\"下一专题\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"再试一次\"},\"text\":{\"startover\":\"重置\",\"areyousure\":\"你确定要重新开始吗? (所有当前进度将被重置)\",\"youmustcomplete\":\"你必须完成\",\"exercise\":\"练习\",\"exercise_plural\":\"练习\",\"inthissection\":\"在进行本节之前\",\"code\":\"代码\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"测试\",\"blank\":\"空\",\"blank_plural\":\"空\",\"exercisecontainsblank\":\"本练习包含{{count}}个$t(text.blank)\",\"pleasereplaceblank\":\"请在{{blank}}内填写恰当的代码\",\"unparsable\":\"这似乎不是有效的R代码。 R不知道如何将您的文本转换为完整的命令。 您是否忘了填空，忘了删除下划线，忘了在参数之间包含逗号，或者是忘了用<code>&quot;<\\/code>, <code>'<\\/code>, <code>)<\\/code>,<code>}<\\/code>来封闭<code>&quot;<\\/code>, <code>'<\\/code>, <code>(<\\/code>。 or <code>{<\\/code>。\\n\",\"unparsablequotes\":\"<p>您的R代码中似乎含有特殊格式的引号，或者弯引号(<code>{{character}}<\\/code>) 在字符串前后，在R中字符串应该被直引号(<code>&quot;<\\/code> 或者 <code>'<\\/code>)包裹。<\\/p> {{code}} <p>别担心，该错误经常在复制粘贴包含格式的代码时遇到， 您可以尝试将该行中的代码替换为以下代码，也许还有其他地方需要修改。<\\/p> {{suggestion}}\\n\",\"unparsableunicode\":\"<p>您的代码中似乎包含有异常字符(<code>{{character}}<\\/code>),导致代码无效。<\\/p> {{code}} <p>有时候你的代码可能含有看似正常字符的特殊字符，特别是当你复制粘贴其他来源代码的时候。 请试着删除这些特殊字符,重新输入<\\/p>\\n\",\"unparsableunicodesuggestion\":\"<p>您的代码中似乎包含有异常字符(<code>{{character}}<\\/code>),导致代码无效。<\\/p> {{code}} <p>有时候你的代码可能含有看似正常字符的特殊字符，特别是当你复制粘贴其他来源代码的时候。 请试着删除这些特殊字符,重新输入<\\/p>\\n\",\"and\":\"且\",\"or\":\"或\",\"listcomma\":\",\",\"oxfordcomma\":\",\"}}},\"pl\":{\"translation\":{\"button\":{\"runcode\":\"Uruchom kod\",\"runcodetitle\":\"$t(button.runcode) ({{kbd}})\",\"hint\":\"Podpowiedź\",\"hint_plural\":\"Podpowiedzi\",\"hinttitle\":\"$t(button.hint)\",\"hintnext\":\"Następna podpowiedź\",\"hintprev\":\"Poprzednia podpowiedź\",\"solution\":\"Rozwiązanie\",\"solutiontitle\":\"$t(button.solution)\",\"copyclipboard\":\"Kopiuj do schowka\",\"startover\":\"Zacznij od początku\",\"startovertitle\":\"$t(button.startover)\",\"continue\":\"Kontynuuj\",\"submitanswer\":\"Wyślij\",\"submitanswertitle\":\"$t(button.submitanswer)\",\"previoustopic\":\"Poprzednia sekcja\",\"nexttopic\":\"Następna sekcja\",\"questionsubmit\":\"$t(button.submitanswer)\",\"questiontryagain\":\"Spróbuj ponownie\"},\"text\":{\"startover\":\"Zacznij od początku\",\"areyousure\":\"Czy na pewno chcesz zacząć od początku? (cały postęp w zadaniu zostanie utracony)\",\"youmustcomplete\":\"Musisz ukończyć\",\"exercise\":\"ćwiczenie\",\"exercise_plural\":\"ćwiczenia\",\"inthissection\":\"w tej sekcji przed kontynuowaniem\",\"code\":\"Kod\",\"enginecap\":\"$t(text.code) {{engine}}\",\"quiz\":\"Quiz\",\"blank\":\"luka\",\"blank_plural\":\"luk(i)\",\"exercisecontainsblank\":\"To ćwiczenie zawiera {{count}} $t(text.blank).\",\"pleasereplaceblank\":\"Proszę uzupełnić {{blank}} prawidłowym kodem.\",\"unparsable\":\"Wygląda na to, że może to nie być prawidłowy kod R. R nie jest w stanie przetworzyć Twojego tekstu na polecenie. Mogłeś(-aś) zapomnieć wypełnić luki, usunąć podkreślnik, umieścić przecinka między argumentami, lub zamknąć znak <code>&quot;<\\/code>, <code>'<\\/code>, <code>(<\\/code> lub <code>{<\\/code> odpowiadającym <code>&quot;<\\/code>, <code>'<\\/code>, <code>)<\\/code> lub <code>}<\\/code>.\\n\",\"unparsablequotes\":\"<p>Wygląda na to, że Twój kod zawiera szczególnie sformatowane cudzysłowy lub cudzysłowy typograficzne (<code>{{character}}<\\/code>) przy ciągach znaków, co sprawia, że kod jest niepoprawny. R wymaga cudzysłowów prostych (<code>&quot;<\\/code> albo <code>'<\\/code>).<\\/p> {{code}} <p>Nie martw się, to powszechne źródło błędów, gdy kopiuje się kod z innego programu, który sam formatuje teskt. Możesz spróbować zastąpić swój kod następującym kodem. Mogą być też inne miejsca, które wymagają poprawienia.<\\/p> {{suggestion}}\\n\",\"unparsableunicode\":\"<p>Wygląda na to, że Twój kod zawiera niespodziewany znak specjalny (<code>{{character}}<\\/code>), co sprawia, że kod jest niepoprawny.<\\/p> {{code}} <p>Czasami Twój kod może zawierać znak specjalny, który wygląda jak zwykły znak, zwłaszcza jeśli kopiujesz kod z innego programu. Spróbuj usunąć znak specjalny i wpisać do ponownie ręcznie.<\\/p>\\n\",\"unparsableunicodesuggestion\":\"<p>Wygląda na to, że Twój kod zawiera niespodziewany znak specjalny (<code>{{character}}<\\/code>), co sprawia, że kod jest niepoprawny.<\\/p> {{code}} <p>Czasami Twój kod może zawierać znak specjalny, który wygląda jak zwykły znak, zwłaszcza jeśli kopiujesz kod z innego programu. Możesz spróbować zastąpić swój kod następującym kodem. Mogą być też inne miejsca, które wymagają poprawienia.<\\/p> {{suggestion}}\\n\",\"and\":\"i\",\"or\":\"lub\",\"listcomma\":\", \",\"oxfordcomma\":\"\"}}}}}<\/script>"]},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-format"]},{"type":"character","attributes":{},"value":["0.11.3.9000"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmarkdown/templates/tutorial/resources"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-format.js"]},{"type":"character","attributes":{},"value":["tutorial-format.css","rstudio-theme.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/3.6.0"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-3.6.0.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquerylib"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.1.4"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["navigation"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/navigation-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tabsets.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.21"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["default.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.21"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/3.6.0"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-3.6.0.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquerylib"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.1.4"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["font-awesome"]},{"type":"character","attributes":{},"value":["6.4.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["fontawesome"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/all.min.css","css/v4-shims.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["fontawesome"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.5.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootbox"]},{"type":"character","attributes":{},"value":["5.5.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/bootbox"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["bootbox.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["idb-keyvalue"]},{"type":"character","attributes":{},"value":["3.2.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/idb-keyval"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["idb-keyval-iife-compat.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[false]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial"]},{"type":"character","attributes":{},"value":["0.11.3.9000"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial.js"]},{"type":"character","attributes":{},"value":["tutorial.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ace"]},{"type":"character","attributes":{},"value":["1.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/ace"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["ace.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["clipboardjs"]},{"type":"character","attributes":{},"value":["2.0.10"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/clipboardjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["clipboard.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.11.3.9000"]}]}]}
+</script>
+<!--/html_preserve-->
+<!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="execution_dependencies">
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81]}},"value":[{"type":"character","attributes":{},"value":["backports","base","bitops","bslib","cachem","checkmate","cli","colorspace","compiler","curl","datasets","digest","dplyr","ellipsis","evaluate","fansi","farver","fastmap","fontawesome","forecast","fracdiff","generics","ggplot2","glue","gradethis","graphics","grDevices","grid","gtable","highr","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","labeling","later","lattice","learnr","lifecycle","lmtest","magrittr","methods","mime","munsell","nlme","nnet","parallel","pillar","pkgconfig","promises","quadprog","quantmod","R6","Rcpp","RCurl","rlang","rmarkdown","rprojroot","rstudioapi","sass","scales","shiny","stats","tibble","tidyselect","timeDate","tools","tseries","TTR","urca","utf8","utils","vctrs","withr","xfun","xtable","xts","yaml","zoo"]},{"type":"character","attributes":{},"value":["1.4.1","4.3.0","1.0-7","0.4.2","1.0.8","2.2.0","3.6.1","2.1-0","4.3.0","5.0.0","4.3.0","0.6.31","1.1.2","0.3.2","0.21","1.0.4","2.1.1","1.1.1","0.5.1","8.21","1.5-2","0.1.3","3.4.2","1.6.2","0.2.12.9005","4.3.0","4.3.0","4.3.0","0.3.3","0.10","0.5.5","1.6.2","1.6.11","0.1.4","1.8.4","1.42","0.4.2","1.3.1","0.21-8","0.11.3.9000","1.0.3","0.9-40","2.0.3","4.3.0","0.12","0.5.0","3.1-162","7.3-18","4.3.0","1.9.0","2.0.3","1.2.0.1","1.5-8","0.4.22","2.5.1","1.0.10","1.98-1.12","1.1.1","2.21","2.0.3","0.14","0.4.6","1.2.1","1.7.4","4.3.0","3.2.1","1.2.0","4022.108","4.3.0","0.10-53","0.24.3","1.3-3","1.2.3","4.3.0","0.6.2","2.5.0","0.39","1.8-4","0.13.1","2.3.7","1.8-12"]}]}]}
+</script>
+<!--/html_preserve-->
+</div>
+</div>
+
+</article> <!-- topics -->
+
+<div class="topicsContainer">
+<div class="topicsPositioner">
+<div class="band">
+<div class="bandContent topicsListContainer">
+
+<!-- begin doc-metadata -->
+<div id="doc-metadata">
+<h1 class="title toc-ignore" style="display:none;"><strong>Series
+temporales</strong></h1>
+<h4 class="author"><em>Departamento de Ciencias Naturales y
+Matemáticas</em></h4>
+</div>
+<!-- end doc-metadata -->
+
+</div> <!-- bandContent.topicsListContainer -->
+</div> <!-- band -->
+</div> <!-- topicsPositioner -->
+</div> <!-- topicsContainer -->
+
+
+</main> <!-- bandContent page -->
+</div> <!-- pageContent band -->
+
+
+
+<!-- Build Tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("section-TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<script>
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+</body>
+
+</html>
